@@ -1,0 +1,23 @@
+version: '3.8'
+volumes:
+  kc_data:
+    name: keycloak-extensions-demo-data
+services:
+  keycloak:
+    container_name: keycloak-graphql
+    image: quay.io/keycloak/keycloak:25.0.2
+    command: start-dev
+    environment:
+      DEBUG: 'true'
+      DEBUG_PORT: '*:8787'
+      KC_FEATURES: preview
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - '8080:8080'
+      - '8787:8787'
+    volumes:
+      - kc_data:/opt/keycloak/data
+      - ./graphql/target/net.brianlevine.keycloak-graphql.jar:/opt/keycloak/providers/keycloak-graphql.jar
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
