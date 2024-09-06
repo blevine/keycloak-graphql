@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "",
+  "sources": [
+    "@react-keycloak/web/index.ts"
+  ],
+  "names": [],
+  "mappings": ";;;;;;;;;;;;AAAA,6CAA0B;AAC1B,gDAA6B;AAC7B,iDAA8B"
+}

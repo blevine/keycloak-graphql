@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "types.js",
+  "sourceRoot": "",
+  "sources": [
+    "@react-keycloak/core/types.ts"
+  ],
+  "names": [],
+  "mappings": ""
+}

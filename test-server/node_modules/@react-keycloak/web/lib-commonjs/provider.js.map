@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "provider.js",
+  "sourceRoot": "",
+  "sources": [
+    "@react-keycloak/web/provider.ts"
+  ],
+  "names": [],
+  "mappings": ";;;AAAA,6CAAyD;AAEzD,qCAAmD;AAEtC,QAAA,qBAAqB,GAAG,yBAAkB,CAAC,iCAAuB,CAAC,CAAA"
+}

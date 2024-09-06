@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "context.js",
+  "sourceRoot": "",
+  "sources": [
+    "@react-keycloak/core/context.ts"
+  ],
+  "names": [],
+  "mappings": ";;;;;;;;;;;AAAA,OAAO,EAAE,aAAa,EAAE,MAAM,OAAO,CAAA;AAmBrC;;;;;;GAMG;AACH,MAAM,UAAU,iBAAiB,CAC/B,cAA8C;IAE9C,OAAO,aAAa,YAClB,WAAW,EAAE,KAAK,IACf,cAAc,EACjB,CAAA;AACJ,CAAC;AAED,eAAe,iBAAiB,CAAA"
+}

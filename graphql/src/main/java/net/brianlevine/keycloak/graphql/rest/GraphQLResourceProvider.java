@@ -1,12 +1,13 @@
 package net.brianlevine.keycloak.graphql.rest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Request;
-import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.*;
 import net.brianlevine.keycloak.graphql.GraphQLController;
 import org.keycloak.forms.login.LoginFormsProvider;
+import org.keycloak.http.HttpRequest;
 import org.keycloak.models.KeycloakContext;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.managers.AppAuthManager;
@@ -14,6 +15,8 @@ import org.keycloak.services.managers.AuthenticationManager.AuthResult;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.keycloak.services.cors.Cors;
+
 
 import java.util.Map;
 
@@ -39,12 +42,20 @@ public class GraphQLResourceProvider implements RealmResourceProvider {
 	public void close() {
 	}
 
+	@OPTIONS
+	@Path("{any:.*}")
+	public Response preflight() {
+		//HttpRequest request = session.getContext().getHttpRequest();
+		return Cors.builder().allowedOrigins("*").auth().preflight().add(Response.ok());
+	}
+
+
 
 	@POST
 	@Path("/")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response postGraphQL(Map<String, Object> body, @Context Request ctx) {
+	public Response postGraphQL(Map<String, Object> body, @Context Request request, @Context HttpHeaders headers) throws JsonProcessingException {
 		//AuthResult auth = checkAuth();
 
 		String query = (String)body.get("query");
@@ -53,8 +64,12 @@ public class GraphQLResourceProvider implements RealmResourceProvider {
 
 		// TODO: Deal with variables.
 
-		Map<String, Object> result = graphql.executeQuery(query, operationName, session);
-		return Response.ok(result).build();
+		Map<String, Object> result = graphql.executeQuery(query, operationName, session, request, headers);
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.enable(SerializationFeature.WRITE_NULL_MAP_VALUES);
+		String s = mapper.writeValueAsString(result);
+
+		return Response.ok(s).header("Access-Control-Allow-Origin", "*").header("Access-Control-Allow-Credentials", "true").build();
 	}
 
 	@GET

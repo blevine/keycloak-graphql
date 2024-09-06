@@ -1,22 +1,107 @@
 package net.brianlevine.keycloak.graphql.types;
 
-import org.keycloak.common.util.MultivaluedHashMap;
+import graphql.GraphQLContext;
+import io.leangen.graphql.annotations.GraphQLArgument;
+import io.leangen.graphql.annotations.GraphQLIgnore;
+import io.leangen.graphql.annotations.GraphQLQuery;
+import io.leangen.graphql.annotations.GraphQLRootContext;
+import io.leangen.graphql.annotations.types.GraphQLType;
+import jakarta.ws.rs.core.HttpHeaders;
+import net.brianlevine.keycloak.graphql.util.Auth;
+import net.brianlevine.keycloak.graphql.util.Page;
 
-import org.keycloak.representations.idm.*;
 
+import org.keycloak.models.ClientModel;
+import org.keycloak.models.GroupModel;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
+import org.keycloak.models.RoleModel;
+import org.keycloak.models.UserModel;
+import org.keycloak.models.utils.ModelToRepresentation;
+import org.keycloak.representations.idm.RealmRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.services.resources.admin.permissions.AdminPermissionEvaluator;
+import org.keycloak.services.resources.admin.permissions.GroupPermissionEvaluator;
+import org.keycloak.services.resources.admin.permissions.RolePermissionEvaluator;
+import org.keycloak.services.resources.admin.permissions.UserPermissionEvaluator;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
-
-
-public class RealmType {
+@GraphQLType
+@SuppressWarnings("unused")
+public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 
     private final RealmRepresentation delegate;
+    private final KeycloakSession kcSession;
+    private RealmModel realmModel;
 
-    public RealmType(RealmRepresentation delegate) {
+    public RealmType(KeycloakSession kcSession, RealmRepresentation delegate) {
         this.delegate = delegate;
+        this.kcSession = kcSession;
     }
+
+    public RealmType(KeycloakSession kcSession, RealmModel realmModel) {
+        this(kcSession, ModelToRepresentation.toRepresentation(kcSession, realmModel, true));
+        this.realmModel = realmModel;
+    }
+
+    @Override
+    @GraphQLIgnore
+    public Stream<RoleModel> getRolesStream(GraphQLContext ctx) {
+        RolePermissionEvaluator evaluator = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).roles();
+
+        return evaluator.canList(getRealmModel()) ? getRealmModel().getRolesStream() : Stream.empty();
+    }
+
+    @Override
+    @GraphQLIgnore
+    public Stream<RoleModel> getRolesStream(int start, int limit, GraphQLContext ctx) {
+        RolePermissionEvaluator evaluator = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).roles();
+
+        return evaluator.canList(getRealmModel()) ? getRealmModel().getRolesStream(start, limit) : Stream.empty();
+    }
+
+    @Override
+    @GraphQLIgnore
+    public Stream<GroupModel> getGroupsStream(int start, int limit, GraphQLContext ctx) {
+        Stream<GroupModel> stream =  kcSession.groups().getTopLevelGroupsStream(getRealmModel(), start, limit);
+
+        GroupPermissionEvaluator groupsEvaluator = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).groups();
+
+        boolean canViewGlobal = groupsEvaluator.canView();
+        return stream.filter(g -> canViewGlobal || groupsEvaluator.canView(g));
+    }
+
+    @Override
+    @GraphQLIgnore
+    public Stream<GroupModel> getGroupsStream(GraphQLContext ctx) {
+        Stream<GroupModel> stream =  kcSession.groups().getTopLevelGroupsStream(getRealmModel());
+
+        GroupPermissionEvaluator groupsEvaluator = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).groups();
+
+        boolean canViewGlobal = groupsEvaluator.canView();
+        return stream.filter(g -> canViewGlobal || groupsEvaluator.canView(g));
+    }
+
+    @GraphQLIgnore
+    public RealmModel getRealmModel() {
+        if (realmModel == null) {
+            realmModel = kcSession.realms().getRealm(getId());
+        }
+
+        return realmModel;
+    }
+
+    @GraphQLIgnore
+    public KeycloakSession getKeycloakSession() {
+        return kcSession;
+    }
+
 
 
     public String getId() {
@@ -62,34 +147,44 @@ public class RealmType {
         delegate.setDisplayNameHtml(displayNameHtml);
     }
 
+    @GraphQLQuery
+    public Page<UserType> getUsers(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit, @GraphQLRootContext GraphQLContext ctx) {
+        RealmModel realm = kcSession.realms().getRealm(getId());
+        HttpHeaders headers = ctx.get("headers");
+        UserPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(headers, getKeycloakSession(), getRealmModel()).users();
 
-    public List<UserRepresentation> getUsers() {
-        return delegate.getUsers();
+        Stream<UserModel> userModels = kcSession.users().searchForUserStream(realm, Collections.emptyMap(), start, limit);
+        Stream<UserRepresentation> userReps =  toUserRepresentation(kcSession, realm, eval, userModels);
+        List<UserType> userTypes = userReps.map(u -> new UserType(kcSession, realm, u)).toList();
+
+        int userCount = userTypes.size();
+        Page<UserType> page = new Page<>(userCount, limit, userTypes);
+
+        return page;
     }
 
 
-    public List<ApplicationRepresentation> getApplications() {
-        return delegate.getApplications();
+    private Stream<UserRepresentation> toUserRepresentation(KeycloakSession session, RealmModel realm, UserPermissionEvaluator usersEvaluator, Stream<UserModel> userModels) {
+
+        boolean canViewGlobal = usersEvaluator.canView();
+
+        usersEvaluator.grantIfNoPermission(session.getAttribute(UserModel.GROUPS) != null);
+        return userModels.filter(user -> canViewGlobal || usersEvaluator.canView(user))
+                .map(user -> {
+                    UserRepresentation userRep = ModelToRepresentation.toRepresentation(session, realm, user);
+                    userRep.setAccess(usersEvaluator.getAccess(user));
+                    return userRep;
+                });
     }
 
 
-    public void setUsers(List<UserRepresentation> users) {
-        delegate.setUsers(users);
-    }
+    @GraphQLQuery
+    public Page<ClientType> getClients(@GraphQLArgument(defaultValue = "0") int start, @GraphQLArgument(defaultValue = "100") int limit) {
+        Stream<ClientModel> clientModels = getRealmModel().getClientsStream(start, limit);
+        List<ClientType> clients = clientModels.map(c -> new ClientType(getKeycloakSession(), getRealmModel(), c)).toList();
+        long count = getRealmModel().getClientsCount();
 
-
-    public UserRepresentation user(String username) {
-        return delegate.user(username);
-    }
-
-
-    public List<ClientRepresentation> getClients() {
-        return delegate.getClients();
-    }
-
-
-    public void setClients(List<ClientRepresentation> clients) {
-        delegate.setClients(clients);
+        return new Page<>((int)count, limit, clients);
     }
 
 
@@ -273,31 +368,6 @@ public class RealmType {
     }
 
 
-    public List<ScopeMappingRepresentation> getScopeMappings() {
-        return delegate.getScopeMappings();
-    }
-
-
-    public ScopeMappingRepresentation clientScopeMapping(String clientName) {
-        return delegate.clientScopeMapping(clientName);
-    }
-
-
-    public ScopeMappingRepresentation clientScopeScopeMapping(String clientScopeName) {
-        return delegate.clientScopeScopeMapping(clientScopeName);
-    }
-
-
-    public Set<String> getRequiredCredentials() {
-        return delegate.getRequiredCredentials();
-    }
-
-
-    public void setRequiredCredentials(Set<String> requiredCredentials) {
-        delegate.setRequiredCredentials(requiredCredentials);
-    }
-
-
     public String getPasswordPolicy() {
         return delegate.getPasswordPolicy();
     }
@@ -377,36 +447,32 @@ public class RealmType {
         delegate.setActionTokenGeneratedByUserLifespan(actionTokenGeneratedByUserLifespan);
     }
 
-
-    public List<String> getDefaultRoles() {
-        return delegate.getDefaultRoles();
+    public RoleType getDefaultRole() {
+        RoleRepresentation role = delegate.getDefaultRole();
+        return new RoleType(getKeycloakSession(), getRealmModel(), role);
     }
 
+    // TODO: Optimize with SQL query rather than iterating over groups by name
+    @GraphQLQuery
+    public Page<GroupType> getDefaultGroups(@GraphQLArgument(defaultValue = "0") int start, @GraphQLArgument(defaultValue = "100") int limit, @GraphQLRootContext GraphQLContext ctx) {
+        AdminPermissionEvaluator auth = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel());
 
-    public void setDefaultRoles(List<String> defaultRoles) {
-        delegate.setDefaultRoles(defaultRoles);
+        if (auth.realm().canViewRealm()) {
+            KeycloakSession session = getKeycloakSession();
+            RealmModel realm = getRealmModel();
+
+            Stream<GroupModel> groups = realm.getDefaultGroupsStream();
+            long count = groups.count();
+
+            groups = realm.getDefaultGroupsStream().skip(start).limit(limit);
+            List<GroupType> groupTypes = groups.map(g -> new GroupType(session, realm, g)).toList();
+
+            return new Page<>((int)count, limit, groupTypes);
+        }
+        else {
+            return Page.emptyPage();
+        }
     }
-
-
-    public RoleRepresentation getDefaultRole() {
-        return delegate.getDefaultRole();
-    }
-
-
-    public void setDefaultRole(RoleRepresentation defaultRole) {
-        delegate.setDefaultRole(defaultRole);
-    }
-
-
-    public List<String> getDefaultGroups() {
-        return delegate.getDefaultGroups();
-    }
-
-
-    public void setDefaultGroups(List<String> defaultGroups) {
-        delegate.setDefaultGroups(defaultGroups);
-    }
-
 
     public String getPrivateKey() {
         return delegate.getPrivateKey();
@@ -498,18 +564,8 @@ public class RealmType {
     }
 
 
-    public void setLoginWithEmailAllowed(Boolean loginWithEmailAllowed) {
-        delegate.setLoginWithEmailAllowed(loginWithEmailAllowed);
-    }
-
-
     public Boolean isDuplicateEmailsAllowed() {
         return delegate.isDuplicateEmailsAllowed();
-    }
-
-
-    public void setDuplicateEmailsAllowed(Boolean duplicateEmailsAllowed) {
-        delegate.setDuplicateEmailsAllowed(duplicateEmailsAllowed);
     }
 
 
@@ -518,28 +574,8 @@ public class RealmType {
     }
 
 
-    public void setResetPasswordAllowed(Boolean resetPassword) {
-        delegate.setResetPasswordAllowed(resetPassword);
-    }
-
-
     public Boolean isEditUsernameAllowed() {
         return delegate.isEditUsernameAllowed();
-    }
-
-
-    public void setEditUsernameAllowed(Boolean editUsernameAllowed) {
-        delegate.setEditUsernameAllowed(editUsernameAllowed);
-    }
-
-
-    public Boolean isSocial() {
-        return delegate.isSocial();
-    }
-
-
-    public Boolean isUpdateProfileOnInitialSocialLogin() {
-        return delegate.isUpdateProfileOnInitialSocialLogin();
     }
 
 
@@ -548,54 +584,17 @@ public class RealmType {
     }
 
 
-    public void setBrowserSecurityHeaders(Map<String, String> browserSecurityHeaders) {
-        delegate.setBrowserSecurityHeaders(browserSecurityHeaders);
-    }
-
-
-    public Map<String, String> getSocialProviders() {
-        return delegate.getSocialProviders();
-    }
-
-
     public Map<String, String> getSmtpServer() {
         return delegate.getSmtpServer();
     }
 
 
-    public void setSmtpServer(Map<String, String> smtpServer) {
-        delegate.setSmtpServer(smtpServer);
-    }
+    //TODO: Return RoleType
 
+//    public RolesRepresentation getRoles() {
+//        return delegate.getRoles();
+//    }
 
-    //public List<OAuthClientRepresentation> getOauthClients() {
-    //    return delegate.getOauthClients();
-    //}
-
-
-    public Map<String, List<ScopeMappingRepresentation>> getClientScopeMappings() {
-        return delegate.getClientScopeMappings();
-    }
-
-
-    public void setClientScopeMappings(Map<String, List<ScopeMappingRepresentation>> clientScopeMappings) {
-        delegate.setClientScopeMappings(clientScopeMappings);
-    }
-
-
-    public Map<String, List<ScopeMappingRepresentation>> getApplicationScopeMappings() {
-        return delegate.getApplicationScopeMappings();
-    }
-
-
-    public RolesRepresentation getRoles() {
-        return delegate.getRoles();
-    }
-
-
-    public void setRoles(RolesRepresentation roles) {
-        delegate.setRoles(roles);
-    }
 
 
     public String getLoginTheme() {
@@ -798,59 +797,59 @@ public class RealmType {
     }
 
 
-    public List<UserFederationProviderRepresentation> getUserFederationProviders() {
-        return delegate.getUserFederationProviders();
-    }
-
-
-    public void setUserFederationProviders(List<UserFederationProviderRepresentation> userFederationProviders) {
-        delegate.setUserFederationProviders(userFederationProviders);
-    }
-
-
-    public List<UserFederationMapperRepresentation> getUserFederationMappers() {
-        return delegate.getUserFederationMappers();
-    }
-
-
-    public void setUserFederationMappers(List<UserFederationMapperRepresentation> userFederationMappers) {
-        delegate.setUserFederationMappers(userFederationMappers);
-    }
-
-
-    public void addUserFederationMapper(UserFederationMapperRepresentation userFederationMapper) {
-        delegate.addUserFederationMapper(userFederationMapper);
-    }
-
-
-    public List<IdentityProviderRepresentation> getIdentityProviders() {
-        return delegate.getIdentityProviders();
-    }
-
-
-    public void setIdentityProviders(List<IdentityProviderRepresentation> identityProviders) {
-        delegate.setIdentityProviders(identityProviders);
-    }
-
-
-    public void addIdentityProvider(IdentityProviderRepresentation identityProviderRepresentation) {
-        delegate.addIdentityProvider(identityProviderRepresentation);
-    }
-
-
-    public List<ProtocolMapperRepresentation> getProtocolMappers() {
-        return delegate.getProtocolMappers();
-    }
-
-
-    public void addProtocolMapper(ProtocolMapperRepresentation rep) {
-        delegate.addProtocolMapper(rep);
-    }
-
-
-    public void setProtocolMappers(List<ProtocolMapperRepresentation> protocolMappers) {
-        delegate.setProtocolMappers(protocolMappers);
-    }
+//    public List<UserFederationProviderRepresentation> getUserFederationProviders() {
+//        return delegate.getUserFederationProviders();
+//    }
+//
+//
+//    public void setUserFederationProviders(List<UserFederationProviderRepresentation> userFederationProviders) {
+//        delegate.setUserFederationProviders(userFederationProviders);
+//    }
+//
+//
+//    public List<UserFederationMapperRepresentation> getUserFederationMappers() {
+//        return delegate.getUserFederationMappers();
+//    }
+//
+//
+//    public void setUserFederationMappers(List<UserFederationMapperRepresentation> userFederationMappers) {
+//        delegate.setUserFederationMappers(userFederationMappers);
+//    }
+//
+//
+//    public void addUserFederationMapper(UserFederationMapperRepresentation userFederationMapper) {
+//        delegate.addUserFederationMapper(userFederationMapper);
+//    }
+//
+//
+//    public List<IdentityProviderRepresentation> getIdentityProviders() {
+//        return delegate.getIdentityProviders();
+//    }
+//
+//
+//    public void setIdentityProviders(List<IdentityProviderRepresentation> identityProviders) {
+//        delegate.setIdentityProviders(identityProviders);
+//    }
+//
+//
+//    public void addIdentityProvider(IdentityProviderRepresentation identityProviderRepresentation) {
+//        delegate.addIdentityProvider(identityProviderRepresentation);
+//    }
+//
+//
+//    public List<ProtocolMapperRepresentation> getProtocolMappers() {
+//        return delegate.getProtocolMappers();
+//    }
+//
+//
+//    public void addProtocolMapper(ProtocolMapperRepresentation rep) {
+//        delegate.addProtocolMapper(rep);
+//    }
+//
+//
+//    public void setProtocolMappers(List<ProtocolMapperRepresentation> protocolMappers) {
+//        delegate.setProtocolMappers(protocolMappers);
+//    }
 
 
     public Boolean isInternationalizationEnabled() {
@@ -888,49 +887,49 @@ public class RealmType {
     }
 
 
-    public List<IdentityProviderMapperRepresentation> getIdentityProviderMappers() {
-        return delegate.getIdentityProviderMappers();
-    }
+//    public List<IdentityProviderMapperRepresentation> getIdentityProviderMappers() {
+//        return delegate.getIdentityProviderMappers();
+//    }
+//
+//
+//    public void setIdentityProviderMappers(List<IdentityProviderMapperRepresentation> identityProviderMappers) {
+//        delegate.setIdentityProviderMappers(identityProviderMappers);
+//    }
+//
+//
+//    public void addIdentityProviderMapper(IdentityProviderMapperRepresentation rep) {
+//        delegate.addIdentityProviderMapper(rep);
+//    }
 
 
-    public void setIdentityProviderMappers(List<IdentityProviderMapperRepresentation> identityProviderMappers) {
-        delegate.setIdentityProviderMappers(identityProviderMappers);
-    }
-
-
-    public void addIdentityProviderMapper(IdentityProviderMapperRepresentation rep) {
-        delegate.addIdentityProviderMapper(rep);
-    }
-
-
-    public List<AuthenticationFlowRepresentation> getAuthenticationFlows() {
-        return delegate.getAuthenticationFlows();
-    }
-
-
-    public void setAuthenticationFlows(List<AuthenticationFlowRepresentation> authenticationFlows) {
-        delegate.setAuthenticationFlows(authenticationFlows);
-    }
-
-
-    public List<AuthenticatorConfigRepresentation> getAuthenticatorConfig() {
-        return delegate.getAuthenticatorConfig();
-    }
-
-
-    public void setAuthenticatorConfig(List<AuthenticatorConfigRepresentation> authenticatorConfig) {
-        delegate.setAuthenticatorConfig(authenticatorConfig);
-    }
-
-
-    public List<RequiredActionProviderRepresentation> getRequiredActions() {
-        return delegate.getRequiredActions();
-    }
-
-
-    public void setRequiredActions(List<RequiredActionProviderRepresentation> requiredActions) {
-        delegate.setRequiredActions(requiredActions);
-    }
+//    public List<AuthenticationFlowRepresentation> getAuthenticationFlows() {
+//        return delegate.getAuthenticationFlows();
+//    }
+//
+//
+//    public void setAuthenticationFlows(List<AuthenticationFlowRepresentation> authenticationFlows) {
+//        delegate.setAuthenticationFlows(authenticationFlows);
+//    }
+//
+//
+//    public List<AuthenticatorConfigRepresentation> getAuthenticatorConfig() {
+//        return delegate.getAuthenticatorConfig();
+//    }
+//
+//
+//    public void setAuthenticatorConfig(List<AuthenticatorConfigRepresentation> authenticatorConfig) {
+//        delegate.setAuthenticatorConfig(authenticatorConfig);
+//    }
+//
+//
+//    public List<RequiredActionProviderRepresentation> getRequiredActions() {
+//        return delegate.getRequiredActions();
+//    }
+//
+//
+//    public void setRequiredActions(List<RequiredActionProviderRepresentation> requiredActions) {
+//        delegate.setRequiredActions(requiredActions);
+//    }
 
 
     public String getOtpPolicyType() {
@@ -1243,24 +1242,24 @@ public class RealmType {
     }
 
 
-    public ClientProfilesRepresentation getParsedClientProfiles() {
-        return delegate.getParsedClientProfiles();
-    }
-
-
-    public void setParsedClientProfiles(ClientProfilesRepresentation clientProfiles) {
-        delegate.setParsedClientProfiles(clientProfiles);
-    }
-
-
-    public ClientPoliciesRepresentation getParsedClientPolicies() {
-        return delegate.getParsedClientPolicies();
-    }
-
-
-    public void setParsedClientPolicies(ClientPoliciesRepresentation clientPolicies) {
-        delegate.setParsedClientPolicies(clientPolicies);
-    }
+//    public ClientProfilesRepresentation getParsedClientProfiles() {
+//        return delegate.getParsedClientProfiles();
+//    }
+//
+//
+//    public void setParsedClientProfiles(ClientProfilesRepresentation clientProfiles) {
+//        delegate.setParsedClientProfiles(clientProfiles);
+//    }
+//
+//
+//    public ClientPoliciesRepresentation getParsedClientPolicies() {
+//        return delegate.getParsedClientPolicies();
+//    }
+//
+//
+//    public void setParsedClientPolicies(ClientPoliciesRepresentation clientPolicies) {
+//        delegate.setParsedClientPolicies(clientPolicies);
+//    }
 
 
     public String getBrowserFlow() {
@@ -1342,30 +1341,26 @@ public class RealmType {
         delegate.setKeycloakVersion(keycloakVersion);
     }
 
-
-    public List<GroupRepresentation> getGroups() {
-        return delegate.getGroups();
-    }
-
-
-    public void setGroups(List<GroupRepresentation> groups) {
-        delegate.setGroups(groups);
-    }
+//
+//
+//    public void setGroups(List<GroupRepresentation> groups) {
+//        delegate.setGroups(groups);
+//    }
 
 
-    public List<ClientTemplateRepresentation> getClientTemplates() {
-        return delegate.getClientTemplates();
-    }
+    //public List<ClientTemplateRepresentation> getClientTemplates() {
+    //    return delegate.getClientTemplates();
+    //}
 
 
-    public List<ClientScopeRepresentation> getClientScopes() {
-        return delegate.getClientScopes();
-    }
-
-
-    public void setClientScopes(List<ClientScopeRepresentation> clientScopes) {
-        delegate.setClientScopes(clientScopes);
-    }
+//    public List<ClientScopeRepresentation> getClientScopes() {
+//        return delegate.getClientScopes();
+//    }
+//
+//
+//    public void setClientScopes(List<ClientScopeRepresentation> clientScopes) {
+//        delegate.setClientScopes(clientScopes);
+//    }
 
 
     public List<String> getDefaultDefaultClientScopes() {
@@ -1388,14 +1383,14 @@ public class RealmType {
     }
 
 
-    public MultivaluedHashMap<String, ComponentExportRepresentation> getComponents() {
-        return delegate.getComponents();
-    }
-
-
-    public void setComponents(MultivaluedHashMap<String, ComponentExportRepresentation> components) {
-        delegate.setComponents(components);
-    }
+//    public MultivaluedHashMap<String, ComponentExportRepresentation> getComponents() {
+//        return delegate.getComponents();
+//    }
+//
+//
+//    public void setComponents(MultivaluedHashMap<String, ComponentExportRepresentation> components) {
+//        delegate.setComponents(components);
+//    }
 
 
     public boolean isIdentityFederationEnabled() {
@@ -1413,14 +1408,15 @@ public class RealmType {
     }
 
 
-    public List<UserRepresentation> getFederatedUsers() {
-        return delegate.getFederatedUsers();
-    }
-
-
-    public void setFederatedUsers(List<UserRepresentation> federatedUsers) {
-        delegate.setFederatedUsers(federatedUsers);
-    }
+    //TODO: Return UserType
+//    public List<UserRepresentation> getFederatedUsers() {
+//        return delegate.getFederatedUsers();
+//    }
+//
+//
+//    public void setFederatedUsers(List<UserRepresentation> federatedUsers) {
+//        delegate.setFederatedUsers(federatedUsers);
+//    }
 
 
     public void setUserManagedAccessAllowed(Boolean userManagedAccessAllowed) {
@@ -1448,17 +1444,17 @@ public class RealmType {
     }
 
 
-    public List<OrganizationRepresentation> getOrganizations() {
-        return delegate.getOrganizations();
-    }
-
-
-    public void setOrganizations(List<OrganizationRepresentation> organizations) {
-        delegate.setOrganizations(organizations);
-    }
-
-
-    public void addOrganization(OrganizationRepresentation org) {
-        delegate.addOrganization(org);
-    }
+//    public List<OrganizationRepresentation> getOrganizations() {
+//        return delegate.getOrganizations();
+//    }
+//
+//
+//    public void setOrganizations(List<OrganizationRepresentation> organizations) {
+//        delegate.setOrganizations(organizations);
+//    }
+//
+//
+//    public void addOrganization(OrganizationRepresentation org) {
+//        delegate.addOrganization(org);
+//    }
 }

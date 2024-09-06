@@ -1,16 +1,18 @@
 package net.brianlevine.keycloak.graphql.util;
 
 
+import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class Page<T> {
-    private int totalItems;
-    private int totalPages;
-    private List<T> items;
+    private final int totalItems;
+    private final int totalPages;
+    private final List<T> items;
 
-    public Page(int totalItems, int totalPages, List<T> items) {
+    public Page(int totalItems, int pageSize, List<T> items) {
         this.totalItems = totalItems;
-        this.totalPages = totalPages;
+        this.totalPages = (int) ((double)totalItems / (double)pageSize);
         this.items = items;
     }
 
@@ -18,23 +20,16 @@ public class Page<T> {
         return totalPages;
     }
 
-    public void setTotalPages(int totalPages) {
-        this.totalPages = totalPages;
-    }
 
     public int getTotalItems() {
         return totalItems;
-    }
-
-    public void setTotalItems(int totalItems) {
-        this.totalItems = totalItems;
     }
 
     public List<T> getItems() {
         return items;
     }
 
-    public void setItems(List<T> items) {
-        this.items = items;
+    public static <T> Page<T> emptyPage() {
+        return new Page<>(0, 0, Collections.emptyList());
     }
 }

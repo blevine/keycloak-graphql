@@ -1,0 +1,59 @@
+{
+  "name": "@react-keycloak/core",
+  "version": "3.2.0",
+  "license": "MIT",
+  "description": "React bindings for Keycloak javascript adapter (core)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/react-keycloak/react-keycloak.git"
+  },
+  "author": "Mattia Panzeri <mattia.panzeri93@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/react-keycloak/react-keycloak/issues"
+  },
+  "homepage": "https://github.com/react-keycloak/react-keycloak#readme",
+  "keywords": [
+    "react",
+    "keycloak"
+  ],
+  "main": "lib-commonjs/index.js",
+  "jsnext:main": "lib/index.js",
+  "module": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "lib-commonjs"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/reactkeycloak"
+  },
+  "scripts": {
+    "clean": "rimraf lib lib-commonjs",
+    "prebuild": "npm run clean",
+    "compile:commonjs": "tsc --module commonjs --outDir lib-commonjs",
+    "compile:esnext": "tsc --module esnext --outDir lib",
+    "compile": "run-p compile:*",
+    "fixmaps:lib": "tweak_sourcemap_paths -a --include 'lib/**/*.js.map' 'lib-commonjs/**/*.js.map'",
+    "fixmaps": "run-p fixmaps:*",
+    "build": "run-s compile fixmaps",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
+    "prepublishOnly": "npm run build && cp ../../README.md . && cp ../../LICENSE.md ."
+  },
+  "peerDependencies": {
+    "react": ">=16"
+  },
+  "dependencies": {
+    "react-fast-compare": "^3.2.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "jsdom"
+  },
+  "gitHead": "6031128e3f1b348c6162347f063b74d596471321"
+}
