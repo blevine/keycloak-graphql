@@ -1,7 +1,0 @@
-{
-  "server-url" : "http://localhost:8180",
-  "realm" : "nodejs-test-mock",
-  "min-time-between-jwks-requests" : 0,
-  "resource" : "public-client",
-  "public-client" : true
-}
