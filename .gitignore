@@ -27,5 +27,5 @@ hs_err_pid*
 target
 deploy*.sh
 dependency-reduced-pom.xml
-
+node_modules
 
