@@ -30,8 +30,14 @@ I wanted to initially concentrate on getting the GraphQL schema (especially the 
 so I haven't concentrated at all on performance. I'm also supporting only read operations
 (GraphQL queries) and no write operations (GraphQL mutations) at this point.
 
+## GraphiQL
+The [GraphiQL](https://github.com/graphql/graphiql) tool is included in this extension. To access GraphiQL, navigate to
+http://localhost:8080/realms/your-realm-name/graphql/graphiql.
+<p></p>
+Note: You'll need to create a realm role called 'graphiql-access'. Users must have the 'graphiql-access' realm 
+role to access GraphiQL.
+
 ## Modules
 
 - graphql: The Keycloak plugin that implements the GraphQL endpoint,  /graphql.
-- test-server: A NodeJS-based server that authenticates against the local dev Keycloak
-server and supports the [GraphiQL](https://github.com/graphql/graphiql) tool.
+

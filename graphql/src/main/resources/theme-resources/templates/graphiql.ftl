@@ -64,38 +64,46 @@
     clientId: 'keycloak-graphql',
   });
 
-  console.log("Authenticating...")
-  console.log("${realm.name}");
+  console.log("Authenticating...");
+
+  const rootElement = document.getElementById('graphiql');
 
   keycloak.init({onLoad: 'login-required'}).then((authenticated) => {
     if (authenticated) {
+      if (keycloak.hasRealmRole('graphiql-access')) {
 
-      console.log("User is authenticated!");
+        console.log("User is authenticated!");
+        const root = ReactDOM.createRoot(rootElement);
 
-      const root = ReactDOM.createRoot(document.getElementById('graphiql'));
+        const fetcher = GraphiQL.createFetcher({
+          credentials: 'include',
+          url: window.location.origin + "/realms/" + "${realm.name}" + "/graphql",
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + keycloak.token
+          }
+        });
 
-      const fetcher = GraphiQL.createFetcher({
-        credentials: 'include',
-        url: window.location.origin + "/realms/" + "${realm.name}" + "/graphql",
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + keycloak.token
-        }});
+        const explorerPlugin = GraphiQLPluginExplorer.explorerPlugin();
+        root.render(
+          React.createElement(GraphiQL, {
+            fetcher,
+            defaultEditorToolsVisibility: true,
+            plugins: [explorerPlugin],
+          }),
+        );
 
-      const explorerPlugin = GraphiQLPluginExplorer.explorerPlugin();
-      root.render(
-        React.createElement(GraphiQL, {
-          fetcher,
-          defaultEditorToolsVisibility: true,
-          plugins: [explorerPlugin],
-        }),
-      );
+      }
+      else {
+        rootElement.innerHTML = "Not authorized. User does not have the required Keycloak role to access GraphiQL."
+      }
 
     } else {
-      alert("User authentication failed!");
+      rootElement.innerHTML = "User authentication failed!";
     }
   }).catch((e) => {
+    rootElement.innerHTML = "Could not authenticate user. See browser console log for more info.";
     console.log("Could not authenticate the user!: ",e);
   });
 
