@@ -85,7 +85,7 @@ public class GraphQLResourceProvider implements RealmResourceProvider {
 
 
 	@GET
-	@Path("/form")
+	@Path("/graphiql")
 	@Produces(MediaType.TEXT_HTML)
 	public Response getForm() {
 		KeycloakContext context = session.getContext();

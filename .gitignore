@@ -28,4 +28,5 @@ target
 deploy*.sh
 dependency-reduced-pom.xml
 node_modules
+kc_data
 

@@ -97,15 +97,18 @@ public class RoleType implements BaseType {
         JpaConnectionProvider connection = kcSession.getProvider(JpaConnectionProvider.class);
         EntityManager em = connection.getEntityManager();
 
-        Query q = em.createNativeQuery("select count(*) from composite_role where composite = :id");
-        q.setParameter("id", getId());
+        //TODO: Performance: Maybe use SQL query instead of stream.count(). Many other places in the code
+        //      where we might want to do this. Maybe move the EntityManager setup (above) to a utility function
+        //      assuming we'll need that in multiple types.
 
-        long count = (long)q.getSingleResult();
+//        Query q = em.createNativeQuery("select count(*) from composite_role where composite = :id");
+//        q.setParameter("id", getId());
+//
+//        long count = (long)q.getSingleResult();
 
-        RoleModel roleModel = realm.getRoleById(getId());
-        Stream<RoleModel> composites = roleModel.getCompositesStream(null, start, limit);
-
-        List<RoleType> items = composites.map(c -> new RoleType(kcSession, realm, ModelToRepresentation.toRepresentation(c))).toList();
+        long count = getRoleModel().getCompositesStream().count();
+        Stream<RoleModel> composites = getRoleModel().getCompositesStream(null, start, limit);
+        List<RoleType> items = composites.map(c -> new RoleType(kcSession, realm, c)).toList();
 
         return new Page<>((int)count, limit, items);
     }

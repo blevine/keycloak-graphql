@@ -71,30 +71,6 @@
     clientId: 'keycloak-graphql',
   });
 
-  function graphQLFetcher(graphQLParams) {
-
-    return fetch(
-      "http://localhost:4000/graphql",
-      //"http://localhost:8080/realms/master/graphql",
-      {
-        method: 'post',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${keycloak.token}`
-        },
-        body: JSON.stringify(graphQLParams),
-        credentials: 'include',
-      },
-    ).then(function (response) {
-      const resp = response.json().catch(function () {
-        return response.text();
-      });
-      return resp;
-    });
-  }
-
-
   console.log("Authenticating...")
 
   keycloak.init({onLoad: 'login-required'}).then((authenticated) => {
