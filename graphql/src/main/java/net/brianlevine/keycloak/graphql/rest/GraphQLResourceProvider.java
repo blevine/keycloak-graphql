@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
+
 import net.brianlevine.keycloak.graphql.GraphQLController;
+
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.resource.RealmResourceProvider;
@@ -38,13 +40,6 @@ public class GraphQLResourceProvider implements RealmResourceProvider {
 	public void close() {
 	}
 
-//	@OPTIONS
-//	@Path("{any:.*}")
-//	public Response preflight() {
-//		return Cors.builder().allowedOrigins("*").auth().preflight().add(Response.ok());
-//	}
-
-
 
 	@POST
 	@Path("/")
@@ -69,8 +64,19 @@ public class GraphQLResourceProvider implements RealmResourceProvider {
 	@GET
 	@Path("/graphiql")
 	@Produces(MediaType.TEXT_HTML)
-	public Response getForm() {
+	public Response getGraphiQL() {
 		LoginFormsProvider forms = session.getProvider(LoginFormsProvider.class);
 		return forms.createForm("graphiql.ftl");
+	}
+
+	@GET
+	@Path("/schema")
+	@Produces(MediaType.TEXT_HTML)
+	public Response getSchema() {
+		String schema = graphql.printSchema();
+		String html = schema.replaceAll("`", "'");
+		LoginFormsProvider forms = session.getProvider(LoginFormsProvider.class);
+		forms.setAttribute("schema", html);
+		return forms.createForm("schema.ftl");
 	}
 }

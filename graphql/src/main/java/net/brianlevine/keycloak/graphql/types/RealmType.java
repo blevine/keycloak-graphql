@@ -6,21 +6,26 @@ import io.leangen.graphql.annotations.GraphQLIgnore;
 import io.leangen.graphql.annotations.GraphQLQuery;
 import io.leangen.graphql.annotations.GraphQLRootContext;
 import io.leangen.graphql.annotations.types.GraphQLType;
-import jakarta.ws.rs.core.HttpHeaders;
+
 import net.brianlevine.keycloak.graphql.util.Auth;
 import net.brianlevine.keycloak.graphql.util.Page;
 
-
+import net.brianlevine.keycloak.graphql.util.Util;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.models.utils.ModelToRepresentation;
+import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.services.resources.admin.AdminEventBuilder;
+import org.keycloak.services.resources.admin.GroupResource;
+import org.keycloak.services.resources.admin.UserResource;
 import org.keycloak.services.resources.admin.permissions.AdminPermissionEvaluator;
 import org.keycloak.services.resources.admin.permissions.GroupPermissionEvaluator;
 import org.keycloak.services.resources.admin.permissions.RolePermissionEvaluator;
@@ -31,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
+
 
 @GraphQLType
 @SuppressWarnings("unused")
@@ -87,6 +93,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
         boolean canViewGlobal = groupsEvaluator.canView();
         return stream.filter(g -> canViewGlobal || groupsEvaluator.canView(g));
     }
+
 
     @GraphQLIgnore
     public RealmModel getRealmModel() {
@@ -150,11 +157,10 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     @GraphQLQuery
     public Page<UserType> getUsers(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit, @GraphQLRootContext GraphQLContext ctx) {
         RealmModel realm = kcSession.realms().getRealm(getId());
-        HttpHeaders headers = ctx.get("headers");
-        UserPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(headers, getKeycloakSession(), getRealmModel()).users();
+        UserPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx, getRealmModel()).users();
 
         Stream<UserModel> userModels = kcSession.users().searchForUserStream(realm, Collections.emptyMap(), start, limit);
-        Stream<UserRepresentation> userReps =  toUserRepresentation(kcSession, realm, eval, userModels);
+        Stream<UserRepresentation> userReps =  RealmType.toUserRepresentation(kcSession, realm, eval, userModels);
         List<UserType> userTypes = userReps.map(u -> new UserType(kcSession, realm, u)).toList();
 
         int userCount = userTypes.size();
@@ -163,8 +169,103 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
         return page;
     }
 
+    @GraphQLQuery(name="user")
+    public UserType getUserById(@GraphQLArgument(name = "id") String id, @GraphQLRootContext GraphQLContext ctx) {
+        KeycloakSession session = getKeycloakSession();
+        RealmModel realmModel = getRealmModel();
+        UserModel userModel = session.users().getUserById(realmModel, id);
+        return toUserType(ctx, session, realmModel, userModel);
+    }
 
-    private Stream<UserRepresentation> toUserRepresentation(KeycloakSession session, RealmModel realm, UserPermissionEvaluator usersEvaluator, Stream<UserModel> userModels) {
+    @GraphQLQuery(name="user")
+    public UserType getUserByUsername(@GraphQLArgument(name = "username") String username, @GraphQLRootContext GraphQLContext ctx) {
+        KeycloakSession session = getKeycloakSession();
+        RealmModel realmModel = getRealmModel();
+        UserModel userModel = session.users().getUserByUsername(realmModel, username);
+        return toUserType(ctx, session, realmModel, userModel);
+    }
+
+    @GraphQLQuery(name="user")
+    public UserType getUserByEmail(@GraphQLArgument(name = "email") String email, @GraphQLRootContext GraphQLContext ctx) {
+        KeycloakSession session = getKeycloakSession();
+        RealmModel realmModel = getRealmModel();
+        UserModel userModel = session.users().getUserByEmail(realmModel, email);
+        return toUserType(ctx, session, realmModel, userModel);
+    }
+
+
+    public UserType toUserType(GraphQLContext ctx, KeycloakSession session, RealmModel realmModel, UserModel userModel) {
+        UserType ret = null;
+
+        if (userModel != null) {
+            AdminPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx, getRealmModel());
+
+            // HACK:  because UserResource sets realm to session.getContext().getRealm() in it's constructor.
+            RealmModel sessionRealm = session.getContext().getRealm();
+            session.getContext().setRealm(realmModel);
+
+            try {
+                UserResource ur = new UserResource(
+                        session,
+                        userModel,
+                        eval,
+                        Util.createAdminEventBuilder(session, realmModel, eval.adminAuth()));
+
+                if (eval.users().canView(userModel)) {
+                    UserRepresentation userRep = ur.getUser(true);
+                    ret = new UserType(session, realmModel, userRep);
+                }
+            } finally {
+                session.getContext().setRealm(sessionRealm);
+            }
+        }
+
+        return ret;
+    }
+
+
+    @GraphQLQuery(name="group")
+    public GroupType getGroupById(@GraphQLArgument(name = "id") String id, @GraphQLRootContext GraphQLContext ctx) {
+        KeycloakSession session = getKeycloakSession();
+        RealmModel realmModel = getRealmModel();
+        GroupModel groupModel = session.groups().getGroupById(realmModel, id);
+        return toGroupType(ctx, session, realmModel, groupModel);
+    }
+
+    @GraphQLQuery(name="group")
+    public GroupType getGroupByPath(@GraphQLArgument(name = "path") String path, @GraphQLRootContext GraphQLContext ctx) {
+        KeycloakSession session = getKeycloakSession();
+        RealmModel realmModel = getRealmModel();
+        GroupModel groupModel = KeycloakModelUtils.findGroupByPath(session, realmModel, path);
+        return toGroupType(ctx, session, realmModel, groupModel);
+    }
+
+    public GroupType toGroupType(GraphQLContext ctx, KeycloakSession session, RealmModel realmModel, GroupModel groupModel) {
+        GroupType ret = null;
+
+        if (groupModel != null) {
+            AdminPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx, getRealmModel());
+            AdminEventBuilder adminEventBuilder = Util.createAdminEventBuilder(session, realmModel, eval.adminAuth());
+
+            GroupResource gr = new GroupResource(
+                    realmModel,
+                    groupModel,
+                    session,
+                    eval,
+                    adminEventBuilder);
+
+            if (eval.groups().canView(groupModel)) {
+                GroupRepresentation groupRep = gr.getGroup();
+                ret = new GroupType(session, realmModel, groupRep);
+            }
+        }
+
+        return ret;
+    }
+
+
+
+    public static Stream<UserRepresentation> toUserRepresentation(KeycloakSession session, RealmModel realm, UserPermissionEvaluator usersEvaluator, Stream<UserModel> userModels) {
 
         boolean canViewGlobal = usersEvaluator.canView();
 
@@ -176,7 +277,6 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
                     return userRep;
                 });
     }
-
 
     @GraphQLQuery
     public Page<ClientType> getClients(@GraphQLArgument(defaultValue = "0") int start, @GraphQLArgument(defaultValue = "100") int limit) {

@@ -1,5 +1,6 @@
 package net.brianlevine.keycloak.graphql.util;
 
+import graphql.GraphQLContext;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.HttpHeaders;
 import org.keycloak.jose.jws.JWSInput;
@@ -48,6 +49,11 @@ public class Auth {
         }
 
         return new AdminAuth(realm, authResult.getToken(), authResult.getUser(), authResult.getClient());
+    }
+
+    public static AdminPermissionEvaluator getAdminPermissionEvaluator(GraphQLContext ctx, RealmModel realm) {
+        return getAdminPermissionEvaluator(ctx.get("headers"), ctx.get("keycloak.session"), realm);
+
     }
 
     public static AdminPermissionEvaluator getAdminPermissionEvaluator(HttpHeaders headers, KeycloakSession session, RealmModel realm) {

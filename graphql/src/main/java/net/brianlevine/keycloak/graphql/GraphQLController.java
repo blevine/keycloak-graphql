@@ -4,6 +4,7 @@ import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.idl.SchemaPrinter;
 import io.leangen.graphql.GraphQLRuntime;
 import io.leangen.graphql.GraphQLSchemaGenerator;
 import jakarta.ws.rs.core.Request;
@@ -52,5 +53,16 @@ public class GraphQLController {
 
     public Map<String, Object> executeQuery(String query, String operationName, KeycloakSession session, Request request, HttpHeaders headers) {
         return executeQuery(query, operationName, session, request, headers, Collections.emptyMap());
+    }
+
+    public String printSchema() {
+
+        return new SchemaPrinter(
+                SchemaPrinter.Options.defaultOptions()
+                        .includeDirectives(true)
+                        .includeScalarTypes(true)
+                        .includeSchemaDefinition(true)
+                        .includeIntrospectionTypes(true)
+        ).print(graphQL.getGraphQLSchema());
     }
 }

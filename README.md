@@ -17,13 +17,15 @@ short response to this is: if you're not a fan of GraphQL, please free to not us
 if you think this project has merit, I encourage you to contribute with comments, bug reports, or PRs.
 
 ## General design philosophy for GraphQL types
-I didn't want to rely too much on Keycloak's REST resources themselves 
-(classes in org.keycloak.services.resource). However the representations of those resources
+I eventually want to optimize this queries and so I wanted the GraphQL code to be independent of the
+Keycloak REST resources (classes in org.keycloak.services.resource). However, since my initial goal was to get the
+schema correct, I've delegated certain resolvers to those *Resource classes with an eye towards evaluating the performance
+of the *Resource code and potentially rewriting it in the GraphQL resolver. However the representations of those resources
 (classes in org.keycloak.representations.idm) seemed like they'd be useful. This is
 especially true since many of the the resource classes contain code that filters representations
 based on the role(s) of the caller and configured policies. So the *Type classes in 
 (net.brianlevine.keycloak.graphql.types) wrap the *Representation and *Model classes and in most cases,
-delegate to the wrapped class.
+delegate to the wrapped class. In some cases, the *Resource classes are used to convert models to representations.
 
 ## Current state of the code
 I wanted to initially concentrate on getting the GraphQL schema (especially the types) right and
