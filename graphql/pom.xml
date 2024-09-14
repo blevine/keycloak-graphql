@@ -73,6 +73,12 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-reload4j</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.jboss.shrinkwrap.resolver</groupId>
+			<artifactId>shrinkwrap-resolver-depchain</artifactId>
+			<type>pom</type>
+		</dependency>
+
 <!--		<dependency>-->
 <!--			<groupId>org.apache.commons</groupId>-->
 <!--			<artifactId>commons-text</artifactId>-->

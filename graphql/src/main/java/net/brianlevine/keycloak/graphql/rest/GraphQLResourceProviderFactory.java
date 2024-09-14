@@ -12,6 +12,7 @@ import org.keycloak.services.resource.RealmResourceProviderFactory;
 public class GraphQLResourceProviderFactory implements RealmResourceProviderFactory {
 
 	public static final String PROVIDER_ID = "graphql";
+	public static final String GRAPHQL_TOOLS_ROLE = "graphql-tools";
 
 	private GraphQLController graphql;
 

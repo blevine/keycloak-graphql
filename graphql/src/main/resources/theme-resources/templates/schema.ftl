@@ -26,7 +26,7 @@
     </head>
     <body>
         <div id="download">
-            <button onclick = "save('keycloak.graphql', `${schema}`)">Download keycloak.graphql...</button>
+            <button onclick = "save('keycloak.graphql', document.getElementById('schema').textContent)">Download keycloak.graphql...</button>
         </div>
 
         <pre>
@@ -47,11 +47,26 @@
 
           keycloak.init({onLoad: 'login-required'}).then((authenticated) => {
             if (authenticated) {
-              if (keycloak.hasRealmRole('graphiql-access')) {
+              if (keycloak.hasRealmRole('graphql-tools')) {
 
                 console.log("User is authenticated!");
-                rootElement.innerHTML = `${schema}`;
-                hljs.highlightAll();
+                // Url for the request
+                const url = 'http://localhost:8080/realms/master/graphql/schemaAuth';
+
+                fetch(url, {
+                  method: 'GET',
+                  credentials: 'include',
+                  headers: {
+                    Authorization: 'Bearer ' + keycloak.token
+                  }
+                })
+                  .then(res => res.text())
+                  .then(s => {
+                    rootElement.innerHTML = s;
+                    hljs.highlightAll();
+
+                  })
+                  .catch(e => { console.log(e); });
               }
               else {
                 rootElement.innerHTML = "Not authorized. User does not have the required Keycloak role to access GraphiQL."

@@ -10,6 +10,10 @@ import net.brianlevine.keycloak.graphql.GraphQLController;
 
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RoleModel;
+import org.keycloak.models.UserModel;
+import org.keycloak.services.managers.AppAuthManager;
+import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,11 +76,49 @@ public class GraphQLResourceProvider implements RealmResourceProvider {
 	@GET
 	@Path("/schema")
 	@Produces(MediaType.TEXT_HTML)
-	public Response getSchema() {
-		String schema = graphql.printSchema();
-		String html = schema.replaceAll("`", "'");
+	public Response schemaForm() {
 		LoginFormsProvider forms = session.getProvider(LoginFormsProvider.class);
-		forms.setAttribute("schema", html);
 		return forms.createForm("schema.ftl");
+	}
+
+	@GET
+	@Path("/schemaAuth")
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response getSchema() {
+		AuthenticationManager.AuthResult authResult = checkAuth();
+
+		UserModel user = authResult.getUser();
+		user = session.users().getUserById(session.getContext().getRealm(), user.getId());
+
+		LOGGER.info("Roles for user = {}", user.getRealmRoleMappingsStream().map(RoleModel::getName).toArray());
+		RoleModel requiredRole = session
+				.roles()
+				.getRealmRole(session.getContext().getRealm(), GraphQLResourceProviderFactory.GRAPHQL_TOOLS_ROLE);
+
+		if (requiredRole != null) {
+			LOGGER.info("Required role is: {}", requiredRole.getName());
+			LOGGER.info("User has role: {}", user.hasRole(requiredRole));
+		}
+		else {
+			LOGGER.info("Required role is null");
+		}
+
+		if ((requiredRole != null) && user.hasRole(requiredRole)) {
+			String schema = graphql.printSchema().replace("`","'");
+			return Response.ok(schema).build();
+		}
+		else {
+			throw new ForbiddenException("User does not have required role.");
+		}
+
+	}
+
+	private AuthenticationManager.AuthResult checkAuth() {
+		AuthenticationManager.AuthResult auth = new AppAuthManager.BearerTokenAuthenticator(session).authenticate();
+		if (auth == null) {
+			throw new NotAuthorizedException("Bearer");
+		}
+
+		return auth;
 	}
 }

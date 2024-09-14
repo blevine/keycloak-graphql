@@ -70,7 +70,7 @@
 
   keycloak.init({onLoad: 'login-required'}).then((authenticated) => {
     if (authenticated) {
-      if (keycloak.hasRealmRole('graphiql-access')) {
+      if (keycloak.hasRealmRole('graphql-tools')) {
 
         console.log("User is authenticated!");
         const root = ReactDOM.createRoot(rootElement);
