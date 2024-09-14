@@ -36,7 +36,7 @@
 
         <script>
           const keycloak = new Keycloak({
-            url: 'http://localhost:8080',
+            url: window.location.origin,
             realm: 'master',
             clientId: 'keycloak-graphql',
           });
@@ -50,8 +50,10 @@
               if (keycloak.hasRealmRole('graphql-tools')) {
 
                 console.log("User is authenticated!");
-                // Url for the request
-                const url = 'http://localhost:8080/realms/master/graphql/schemaAuth';
+
+                // Uses the fact that the endpoint for this form is /schema and the endpoint to retrieve the
+                // schema is /schemaAuth.
+                const url = window.location.href + 'Auth';
 
                 fetch(url, {
                   method: 'GET',
@@ -69,14 +71,14 @@
                   .catch(e => { console.log(e); });
               }
               else {
-                rootElement.innerHTML = "Not authorized. User does not have the required Keycloak role to access GraphiQL."
+                rootElement.innerHTML = "<h2>Not authorized. User does not have the required Keycloak role to access GraphiQL.</h2>"
               }
 
             } else {
-              rootElement.innerHTML = "User authentication failed!";
+              rootElement.innerHTML = "<h2>User authentication failed!</h2>";
             }
           }).catch((e) => {
-            rootElement.innerHTML = "Could not authenticate user. See browser console log for more info.";
+            rootElement.innerHTML = "<h2>Could not authenticate user. See browser console log for more info.</h2>";
             console.log("Could not authenticate the user!: ",e);
           });
         </script>
