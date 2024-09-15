@@ -1,3 +1,4 @@
+![Keycloak GraphQL](https://github.com/github/docs/actions/workflows/maven.yml/badge.svg)
 # Keycloak GraphQL API
 
 ## WARNING: This project is in its formative stages, please do not use in production!
