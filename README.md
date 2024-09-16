@@ -1,4 +1,4 @@
-![Keycloak GraphQL](https://github.com/blevine/keycloak-graphql/actions/workflows/maven.yml/badge.svg?cache-control=no-cache)
+![CI Build](https://github.com/blevine/keycloak-graphql/actions/workflows/maven.yml/badge.svg?cache-control=no-cache)
 # Keycloak GraphQL API
 
 ## WARNING: This project is in its formative stages, please do not use in production!
