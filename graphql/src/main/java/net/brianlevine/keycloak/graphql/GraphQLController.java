@@ -9,6 +9,7 @@ import io.leangen.graphql.GraphQLRuntime;
 import io.leangen.graphql.GraphQLSchemaGenerator;
 import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.HttpHeaders;
+import net.brianlevine.keycloak.graphql.queries.ErrorQuery;
 import net.brianlevine.keycloak.graphql.queries.RealmQuery;
 import org.keycloak.models.KeycloakSession;
 
@@ -23,17 +24,21 @@ public class GraphQLController {
     // TODO: Maybe call initialization from the REST provider factory
     public GraphQLController() {
         RealmQuery realmQuery = new RealmQuery();
+        ErrorQuery errorQuery = new ErrorQuery();
 
         //Schema generated from query classes
         GraphQLSchema schema = new GraphQLSchemaGenerator()
                 .withBasePackages(
                         "net.brianlevine.keycloak.graphql"
                 )
-                .withOperationsFromSingletons(realmQuery)
+                .withOperationsFromSingletons(realmQuery, errorQuery)
                 .withRelayConnectionCheckRelaxed()
                 .generate();
 
-        graphQL = GraphQLRuntime.newGraphQL(schema).build();
+        graphQL = GraphQLRuntime
+                .newGraphQL(schema)
+                .defaultDataFetcherExceptionHandler(new KeycloakGraphQLDataFetcherExceptionHandler())
+                .build();
     }
 
     public Map<String, Object> executeQuery(String query, String operationName, KeycloakSession session, Request request, HttpHeaders headers, Map<String, Object> variables) {
