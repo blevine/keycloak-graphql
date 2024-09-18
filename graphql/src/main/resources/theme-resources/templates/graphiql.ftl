@@ -13,7 +13,6 @@
             height: 100vh;
         }
     </style>
-    <script src="${url.resourcesPath}/../keycloak-graphql-theme/foo.js"></script>
     <script src="${url.resourcesPath}/../keycloak-graphql-theme/keycloak.min.js"></script>
     <!--
       This GraphiQL example depends on Promise and fetch, which are available in
@@ -59,20 +58,16 @@
 
 <script>
   const keycloak = new Keycloak({
-    url: 'http://localhost:8080',
-    realm: 'master',
+    url: window.location.origin,
+    realm: '${realm.name}',
     clientId: 'keycloak-graphql',
   });
-
-  console.log("Authenticating...");
 
   const rootElement = document.getElementById('graphiql');
 
   keycloak.init({onLoad: 'login-required'}).then((authenticated) => {
     if (authenticated) {
       if (keycloak.hasRealmRole('graphql-tools')) {
-
-        console.log("User is authenticated!");
         const root = ReactDOM.createRoot(rootElement);
 
         const fetcher = GraphiQL.createFetcher({
@@ -85,10 +80,18 @@
           }
         });
 
+        async function fetcherWithRefresh(graphqlParams, opts) {
+          await keycloak.updateToken(30);
+
+          opts.headers ||= {};
+          opts.headers['Authorization'] = 'Bearer ' + keycloak.token;
+          return fetcher(graphqlParams, opts);
+        }
+
         const explorerPlugin = GraphiQLPluginExplorer.explorerPlugin();
         root.render(
           React.createElement(GraphiQL, {
-            fetcher,
+            fetcher: fetcherWithRefresh,
             defaultEditorToolsVisibility: true,
             plugins: [explorerPlugin],
           }),

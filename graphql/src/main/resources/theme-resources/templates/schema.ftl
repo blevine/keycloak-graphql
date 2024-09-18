@@ -37,7 +37,7 @@
         <script>
           const keycloak = new Keycloak({
             url: window.location.origin,
-            realm: 'master',
+            realm: '${realm.name}',
             clientId: 'keycloak-graphql',
           });
 

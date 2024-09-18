@@ -1,5 +1,6 @@
 package net.brianlevine.keycloak.graphql.queries;
 
+import jakarta.ws.rs.ForbiddenException;
 import net.brianlevine.keycloak.graphql.util.Page;
 import net.brianlevine.keycloak.graphql.util.Auth;
 
@@ -22,7 +23,6 @@ import org.keycloak.services.resources.admin.permissions.AdminPermissions;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 public class RealmQuery {
 
@@ -35,6 +35,7 @@ public class RealmQuery {
         KeycloakSession session = ctx.get("keycloak.session");
         HttpHeaders headers = ctx.get("headers");
         AdminAuth auth = Auth.authenticateRealmAdminRequest(session, headers);
+        Page<RealmType> ret;
 
 
         // TODO: If we use ExportUtils.exportRealm() we could get more realm information into the realm
@@ -43,13 +44,17 @@ public class RealmQuery {
         //       grained options based on what fields were requested in the GraphQL query
 
         RealmsAdminResource rar = new RealmsAdminResource(session, auth, new TokenManager());
-        List<RealmRepresentation> realms = rar.getRealms(false).toList();
-        List<RealmType> realmTypes = realms.stream().map(rep -> rep != null ? new RealmType(session, rep) : null)
-                .filter(Objects::nonNull)
-                .toList();
-        Page<RealmType> page = new Page<>(realms.size(), limit, realmTypes);
+        try {
+            List<RealmRepresentation> realms = rar.getRealms(false).toList();
+            List<RealmType> realmTypes = realms.stream().map(rep -> rep != null ? new RealmType(session, rep) : null)
+                    .filter(Objects::nonNull)
+                    .toList();
+            ret = new Page<>(realms.size(), limit, realmTypes);
+        } catch (ForbiddenException e) {
+            ret = Page.emptyPage();
+        }
 
-        return page;
+        return ret;
     }
 
     @GraphQLQuery(name = "realm")
@@ -59,7 +64,7 @@ public class RealmQuery {
         HttpHeaders headers = ctx.get("headers");
         AdminAuth auth = Auth.authenticateRealmAdminRequest(session, headers);
 
-        return toRealmType(ctx, session, realm, auth);
+        return toRealmType(session, realm, auth);
     }
 
     @GraphQLQuery(name = "realm")
@@ -68,7 +73,7 @@ public class RealmQuery {
         RealmModel realm = session.realms().getRealmByName(name);
         HttpHeaders headers = ctx.get("headers");
         AdminAuth auth = Auth.authenticateRealmAdminRequest(session, headers);
-        return toRealmType(ctx, session, realm, auth);
+        return toRealmType(session, realm, auth);
     }
 
 
@@ -80,10 +85,10 @@ public class RealmQuery {
         HttpHeaders headers = ctx.get("headers");
         AdminAuth auth = Auth.authenticateRealmAdminRequest(session, headers);
 
-        return toRealmType(ctx, session, realm, auth);
+        return toRealmType(session, realm, auth);
     }
 
-    private RealmType toRealmType(@GraphQLRootContext GraphQLContext ctx, KeycloakSession session, RealmModel realm, AdminAuth auth) {
+    private RealmType toRealmType(KeycloakSession session, RealmModel realm, AdminAuth auth) {
         if (realm != null) {
             RealmRepresentation rep = toRealmRep(session, auth, realm);
             return rep != null ? new RealmType(session, rep) : null;
