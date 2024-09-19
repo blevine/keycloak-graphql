@@ -1,5 +1,6 @@
 ![CI Build](https://github.com/blevine/keycloak-graphql/actions/workflows/maven.yml/badge.svg?cache-control=no-cache)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![](https://img.shields.io/badge/Keycloak-25.0.2-blue)
 # Keycloak GraphQL API
 
 ## WARNING: This project is in its formative stages, please do not use in production!
@@ -15,6 +16,8 @@ specifying whether a "brief" or "full" representation was to be returned.
 I had already become interested GraphQL and was building a GraphQL API as part of this project. It seemed
 clear that I could address the problems mentioned above by providing a GraphQL API for Keycloak.
 
+## Contributing
+I am not accepting pull requests at this time. Please feel free to post questions/comments in [Discussions](https://github.com/blevine/keycloak-graphql/discussions).
 
 ## Current state of the code
 
