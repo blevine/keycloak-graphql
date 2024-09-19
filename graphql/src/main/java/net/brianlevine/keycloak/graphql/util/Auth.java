@@ -19,6 +19,10 @@ public class Auth {
     /**
      * From AdminRoot
      */
+
+    public static AdminAuth authenticateRealmAdminRequest(KeycloakSession session, GraphQLContext ctx) {
+        return authenticateRealmAdminRequest(session, (HttpHeaders)ctx.get("headers"));
+    }
     public static AdminAuth authenticateRealmAdminRequest(KeycloakSession session, HttpHeaders headers) {
         String tokenString = AppAuthManager.extractAuthorizationHeaderToken(headers);
         if (tokenString == null) throw new NotAuthorizedException("Bearer");

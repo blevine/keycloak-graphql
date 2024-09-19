@@ -99,14 +99,14 @@
 
       }
       else {
-        rootElement.innerHTML = "Not authorized. User does not have the required Keycloak role to access GraphiQL."
+        rootElement.innerHTML = "<h2>Not authorized. User does not have the required role to access GraphiQL.</h2>"
       }
 
     } else {
-      rootElement.innerHTML = "User authentication failed!";
+      rootElement.innerHTML = "<h2>User authentication failed!</h2>";
     }
   }).catch((e) => {
-    rootElement.innerHTML = "Could not authenticate user. See browser console log for more info.";
+    rootElement.innerHTML = "<h2>Could not authenticate user. See browser console log for more info.</h2>";
     console.log("Could not authenticate the user!: ",e);
   });
 

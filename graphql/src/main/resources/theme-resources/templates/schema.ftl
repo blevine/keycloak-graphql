@@ -41,8 +41,6 @@
             clientId: 'keycloak-graphql',
           });
 
-          console.log("Authenticating...");
-
           const rootElement = document.getElementById('schema');
 
           keycloak.init({onLoad: 'login-required'}).then((authenticated) => {
@@ -71,7 +69,7 @@
                   .catch(e => { console.log(e); });
               }
               else {
-                rootElement.innerHTML = "<h2>Not authorized. User does not have the required Keycloak role to access GraphiQL.</h2>"
+                rootElement.innerHTML = "<h2>Not authorized. User does not have the required role to access GraphiQL.</h2>"
               }
 
             } else {

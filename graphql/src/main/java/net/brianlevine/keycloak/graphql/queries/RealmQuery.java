@@ -26,7 +26,7 @@ import java.util.Objects;
 
 public class RealmQuery {
 
-    @GraphQLQuery(name = "realms")
+    @GraphQLQuery(name = "realms", description = "Return a collection of realms that are viewable by the caller.")
     public Page<RealmType> getRealms(
             @GraphQLRootContext GraphQLContext ctx,
             @GraphQLArgument(name="limit", defaultValue = "100") int limit,
@@ -57,7 +57,7 @@ public class RealmQuery {
         return ret;
     }
 
-    @GraphQLQuery(name = "realm")
+    @GraphQLQuery(name = "realm", description = "Get a realm by ID.")
     public RealmType getRealmById(@GraphQLArgument String id, @GraphQLRootContext GraphQLContext ctx) {
         KeycloakSession session = ctx.get("keycloak.session");
         RealmModel realm = session.realms().getRealm(id);
@@ -67,7 +67,7 @@ public class RealmQuery {
         return toRealmType(session, realm, auth);
     }
 
-    @GraphQLQuery(name = "realm")
+    @GraphQLQuery(name = "realm", description = "Get realm by name.")
     public RealmType getRealmByName(@GraphQLArgument String name, @GraphQLRootContext GraphQLContext ctx) {
         KeycloakSession session = ctx.get("keycloak.session");
         RealmModel realm = session.realms().getRealmByName(name);
@@ -78,7 +78,7 @@ public class RealmQuery {
 
 
 
-    @GraphQLQuery(name = "realm")
+    @GraphQLQuery(name = "realm", description = "Get the current realm (i.e., the realm against which the caller authenticated.")
     public RealmType getRealm( @GraphQLRootContext GraphQLContext ctx) {
         KeycloakSession session = ctx.get("keycloak.session");
         RealmModel realm = session.getContext().getRealm();

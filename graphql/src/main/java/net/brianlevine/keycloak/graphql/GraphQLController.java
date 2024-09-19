@@ -11,6 +11,7 @@ import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.HttpHeaders;
 import net.brianlevine.keycloak.graphql.queries.ErrorQuery;
 import net.brianlevine.keycloak.graphql.queries.RealmQuery;
+import net.brianlevine.keycloak.graphql.queries.UserQuery;
 import org.keycloak.models.KeycloakSession;
 
 import java.util.Collections;
@@ -25,13 +26,14 @@ public class GraphQLController {
     public GraphQLController() {
         RealmQuery realmQuery = new RealmQuery();
         ErrorQuery errorQuery = new ErrorQuery();
+        UserQuery userQuery = new UserQuery();
 
         //Schema generated from query classes
         GraphQLSchema schema = new GraphQLSchemaGenerator()
                 .withBasePackages(
                         "net.brianlevine.keycloak.graphql"
                 )
-                .withOperationsFromSingletons(realmQuery, errorQuery)
+                .withOperationsFromSingletons(realmQuery, errorQuery, userQuery)
                 .withRelayConnectionCheckRelaxed()
                 .generate();
 
