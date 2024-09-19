@@ -1,5 +1,5 @@
 ![CI Build](https://github.com/blevine/keycloak-graphql/actions/workflows/maven.yml/badge.svg?cache-control=no-cache)
-![](https://img.shields.io/github/license/blevine/keycloak-graphql?label=License)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 # Keycloak GraphQL API
 
 ## WARNING: This project is in its formative stages, please do not use in production!
