@@ -29,6 +29,7 @@ based on role-based access control so this seems the safest route for now.
 org.keycloak.models package. For certain optimizations, I'll probably break away from using these classes and write 
 my own SQL queries. This will be done on a case-by-case basis.
 - GraphQL variables are not yet supported.
+- Built and tested against Keycloak 25.0.2. Once we do actual releases, a compatibility table will be provided.
 
 
 ## Building the JAR file
@@ -61,6 +62,14 @@ browser at http://localhost:8080/realms/your-realm-name/graphql/graphiql.
 ### Viewing/downloading the GraphQL schema
 To view the Keycloak GraphQL schema, point your browser at http://localhost:8080/realms/your-realm-name/graphql/graphiql.
 Click the Download... button to download the schema.
+
+### Testing queries from the command-line
+GraphiQL is probably the best way to test out your queries. If you want to test your queries from the command-line,
+a shell script is provide at ./scripts/graphql_test.sh.
+
+Run `graphql_test.sh username password realm_name full_path_to_query.json`.
+
+You'll need to have 'curl' and 'jq' installed.
 
 ## Some interesting queries.
 Note: All queries except 'currentUser' must be enclosed in a realm field. You can indicate a specific realm by adding
