@@ -34,6 +34,21 @@ my own SQL queries. This will be done on a case-by-case basis.
 - GraphQL variables are not yet supported.
 - Built and tested against Keycloak 25.0.2. Once we do actual releases, a compatibility table will be provided.
 
+## Access control, existence, and errors
+Keycloak imposes role-based access controls on its resources. When a query returns a collection, any items in that collection
+to which the caller does not have access are removed from the collection. If the caller does not have access to the entire
+collection, a page with an empty items array is returned. For queries returning single results, a null is
+returned when the caller does not have access.
+
+There is no way to determine whether a null result is due to access control or the item not being found. In other words,
+errors are not raised in either case. This is intentional for security reasons. If we raised different errors for
+access control and existence, a caller could, for example, determine whether a user existed by name (AccessDenied vs
+NoSuchUser error).
+
+## Map fields
+Certain fields (especially in Realm), return Maps of varying complexity. These will most likely be wrapped in specific
+GraphQL types at some point.
+
 
 ## Building the JAR file
 Run `mvn clean package`.
