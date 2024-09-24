@@ -90,18 +90,9 @@ public class GraphQLResourceProvider implements RealmResourceProvider {
 		UserModel user = authResult.getUser();
 		user = session.users().getUserById(session.getContext().getRealm(), user.getId());
 
-		LOGGER.info("Roles for user = {}", user.getRealmRoleMappingsStream().map(RoleModel::getName).toArray());
 		RoleModel requiredRole = session
 				.roles()
 				.getRealmRole(session.getContext().getRealm(), GraphQLResourceProviderFactory.GRAPHQL_TOOLS_ROLE);
-
-		if (requiredRole != null) {
-			LOGGER.info("Required role is: {}", requiredRole.getName());
-			LOGGER.info("User has role: {}", user.hasRole(requiredRole));
-		}
-		else {
-			LOGGER.info("Required role is null");
-		}
 
 		if ((requiredRole != null) && user.hasRole(requiredRole)) {
 			String schema = graphql.printSchema().replace("`","'");

@@ -2,7 +2,6 @@ package net.brianlevine.keycloak.graphql.types;
 
 import graphql.GraphQLContext;
 import io.leangen.graphql.annotations.GraphQLArgument;
-import io.leangen.graphql.annotations.GraphQLIgnore;
 import io.leangen.graphql.annotations.GraphQLQuery;
 import io.leangen.graphql.annotations.GraphQLRootContext;
 import net.brianlevine.keycloak.graphql.util.Page;

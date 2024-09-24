@@ -5,7 +5,6 @@ import io.leangen.graphql.annotations.GraphQLIgnore;
 import io.leangen.graphql.annotations.GraphQLQuery;
 import io.leangen.graphql.annotations.types.GraphQLType;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.Query;
 import net.brianlevine.keycloak.graphql.util.Page;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.models.ClientModel;

@@ -5,7 +5,6 @@ import io.leangen.graphql.annotations.GraphQLQuery;
 import io.leangen.graphql.annotations.GraphQLRootContext;
 import net.brianlevine.keycloak.graphql.types.UserType;
 import net.brianlevine.keycloak.graphql.util.Auth;
-import org.keycloak.models.KeycloakContext;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.UserModel;
 import org.keycloak.services.resources.admin.AdminAuth;
