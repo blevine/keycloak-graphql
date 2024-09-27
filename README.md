@@ -17,10 +17,12 @@ specifying whether a "brief" or "full" representation was to be returned.
 I had already become interested GraphQL and was building a GraphQL API as part of this project. It seemed
 clear that I could address the problems mentioned above by providing a GraphQL API for Keycloak.
 
-## Goals
+## Generalized roadmap (no timeline yet)
 - Replicate the functionality of the [Keycloak Admin REST API](https://www.keycloak.org/docs-api/25.0.2/rest-api/index.html) in GraphQL.
 - Make it easier for consumers of the API to specify the shape of the data the want to retrieve.
+- Support ordering and filtering on queries.
 - Support performant "joining" of certain entities, e.g. users + roles + groups.
+- Support write (GraphQL mutation) operations.
 - Support real-time updates/notifications using GraphQL subscriptions.
 
 ## Contributing
@@ -36,8 +38,8 @@ on those types right without regard to performance improvements.
 - The GraphQL types rely heavily on some of the existing REST code, most notably the *Resource 
 classes in the org.keycloak.admin.client.resource package and the *Representation classes in the 
 org.keycloak.representations.idm package. The *Resource classes include filtering
-based on role-based access control so this seems the safest route for now.
-- GraphQL *Type classes mostly just delegate to those classes and sometimes to the related *Model classes in the
+based on role-based access control so this seems the safest route for now. GraphQL *Type classes mostly just delegate 
+to those classes and sometimes to the related *Model classes in the
 org.keycloak.models package. For certain optimizations, I'll probably break away from using these classes and write 
 my own SQL queries. This will be done on a case-by-case basis.
 - GraphQL variables are not yet supported.
@@ -46,7 +48,7 @@ my own SQL queries. This will be done on a case-by-case basis.
 ## Access control, existence, and errors
 Keycloak imposes role-based access controls on its resources. When a GraphQL query returns a collection, any items in that collection
 to which the caller does not have access are removed from the collection. If the caller does not have access to the
-collection itself, a page with an empty items array is returned. For queries returning single results, a null is
+collection itself, a Page with an empty items array is returned. For queries returning single results, a null is
 returned when the caller does not have access.
 
 There is no way to determine whether a null result is due to access control or the item not being found. In other words,
@@ -70,7 +72,7 @@ Use one of the methods described [here](https://maven.apache.org/surefire/maven-
 ## Debugging the Keycloak container while running the tests
 The tests programmatically instantiate a [Keycloak test container](https://github.com/dasniko/testcontainers-keycloak). To
 debug into the Keycloak test container (as opposed to debugging the tests themselves):
-1. Run `DEBUG_PORT=nnnn mvn text`. During startup, you'll see messages indicating that the container is starting in DEBUG
+1. Run `DEBUG_PORT=nnnn mvn test`. During startup, you'll see messages indicating that the container is starting in DEBUG
 mode. The container will wait until you've attached your debugger to proceed.
 2. Attach your debugger to the Keycloak server on the port you chose. _You'll need to do this twice. The first time,
 the attach succeeds, but then exits after a few seconds. Attach your debugger again to actually attach to the Keycloak
@@ -89,7 +91,7 @@ The docker-compose.yml file is configured to run the correct version of Keycloak
 Copy the JAR file to the <KEYCLOAK_DIR>/providers directory. Re-start Keycloak.
 
 ## Tools
-Tools are provided as development aids. You'll need to create a 'graphql-tools' realm role and assign this
+A couple of tools are provided as development aids. You'll need to create a 'graphql-tools' realm role and assign this
 role to users to whom you want to grant access. You'll also need to create a 'keycloak-graphql' client. 
 The easiest way to do this is to import the client using the keycloak-graphql-client.json file in the root directory of this
 project.
@@ -113,7 +115,7 @@ You'll need to have the 'curl' and 'jq' commands installed.
 
 ## Some interesting queries.
 Note: All queries except 'currentUser' must be enclosed in a realm field. You can indicate a specific realm by adding
-the id or name arguments or the current (authenticated) realm by providing no arguments.
+the `id` or `name`. Providing no arguments indicates the current realm (i.e., the realm against which you authenticated).
 
 The ordering of items
 in paged queries is determined by the underlying Keycloak REST code. Specifying explicit ordering and filtering will 

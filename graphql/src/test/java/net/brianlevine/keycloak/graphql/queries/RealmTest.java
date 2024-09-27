@@ -1,14 +1,13 @@
-package net.brianlevine.keycloak.graphql.rest;
+package net.brianlevine.keycloak.graphql.queries;
 
 import io.restassured.response.ValidatableResponse;
+import net.brianlevine.keycloak.graphql.GraphQLTest;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.resource.UserResource;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-@Testcontainers
 public class RealmTest extends GraphQLTest {
 
     @Test
@@ -23,7 +22,7 @@ public class RealmTest extends GraphQLTest {
                 }
                 """;
 
-        sendGraphQLRequestAsTestAdmin(query).body("data.realm.name", equalTo("test"));
+        sendGraphQLRequestAsTestAdmin(query).body("data.realm.name", equalTo(TEST_REALM));
     }
 
     @Test
@@ -42,7 +41,7 @@ public class RealmTest extends GraphQLTest {
         sendGraphQLRequestAsTestAdmin(query)
                 .body("data.realms.items.name", hasSize(1))
                 .and()
-                .body("data.realms.items.name[0]", equalTo("test"));
+                .body("data.realms.items.name[0]", equalTo(TEST_REALM));
     }
 
     @Test
@@ -60,8 +59,8 @@ public class RealmTest extends GraphQLTest {
 
         int numRealms = 5; // including master realm
         String[] realmNames = new String[numRealms];
-        realmNames[0] = "master";
-        realmNames[1] = "test";
+        realmNames[0] = MASTER_REALM;
+        realmNames[1] = TEST_REALM;
         for (int i = 2; i < numRealms; i++) {
             String realmName = "realm" + i;
             createRealm(realmName);
@@ -88,7 +87,7 @@ public class RealmTest extends GraphQLTest {
         UserResource user = createUser("baduser", "somepassword");
         assertNotNull(user);
 
-        sendGraphQLRequestAsUser(query, "test", "baduser", "somepassword").body("data.realm", equalTo(null));
+        sendGraphQLRequestAsUser(query, TEST_REALM, "baduser", "somepassword").body("data.realm", equalTo(null));
     }
 
 }

@@ -1,8 +1,9 @@
-package net.brianlevine.keycloak.graphql.rest;
+package net.brianlevine.keycloak.graphql;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
+import net.brianlevine.keycloak.graphql.rest.GraphQLResourceProviderFactory;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.*;
@@ -17,7 +18,6 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.testcontainers.junit.jupiter.Container;
 
 import java.io.File;
 import java.util.List;
@@ -26,34 +26,12 @@ import static dasniko.testcontainers.keycloak.ExtendableKeycloakContainer.ADMIN_
 import static io.restassured.RestAssured.given;
 
 public abstract class GraphQLTest {
+    public final static String TEST_REALM = "test";
+    public final static String MASTER_REALM = "master";
     private final static String KEYCLOAK_VERSION = "25.0.2";
     private final static String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:" + KEYCLOAK_VERSION;
 
-    @Container
     public static KeycloakContainer keycloak;
-
-    static {
-        final List<File> libs = Maven.resolver()
-                .resolve("io.leangen.graphql:spqr:0.12.3")
-                .withTransitivity().asList(File.class);
-
-        String debugPort = System.getenv().get("DEBUG_PORT");
-        if (debugPort != null) {
-            keycloak = new KeycloakContainer(KEYCLOAK_IMAGE)
-                    .withProviderClassesFrom("target/classes")
-                    .withProviderLibsFrom(libs)
-                    .withEnv("DB_VENDOR", "h2")
-                    .withDebugFixedPort(Integer.parseInt(debugPort), true);
-            System.out.println(">>> Keycloak debugging with wait-for-attach is ENABlED. Debug port = " + debugPort);
-        }
-        else {
-            keycloak = new KeycloakContainer(KEYCLOAK_IMAGE)
-                    .withProviderClassesFrom("target/classes")
-                    .withProviderLibsFrom(libs)
-                    .withEnv("DB_VENDOR", "h2");
-        }
-    }
-
     public static Keycloak masterKeycloakClient;
     public static Keycloak testKeycloakClient;
     public static RealmResource masterRealmResource;
@@ -62,23 +40,45 @@ public abstract class GraphQLTest {
 
     @BeforeAll
     public static void beforeAll() {
-        masterKeycloakClient = keycloak.getKeycloakAdminClient();
-        masterRealmResource = masterKeycloakClient.realm("master");
-        UserRepresentation ur = masterRealmResource.users().searchByUsername("admin", true).get(0);
-        masterRealmAdminUser = masterRealmResource.users().get(ur.getId());
+        if (keycloak == null) {
+            final List<File> libs = Maven.resolver()
+                    .resolve("io.leangen.graphql:spqr:0.12.3")
+                    .withTransitivity().asList(File.class);
+
+            String debugPort = System.getenv().get("DEBUG_PORT");
+            if (debugPort != null) {
+                keycloak = new KeycloakContainer(KEYCLOAK_IMAGE)
+                        .withProviderClassesFrom("target/classes")
+                        .withProviderLibsFrom(libs)
+                        .withEnv("DB_VENDOR", "h2")
+                        .withDebugFixedPort(Integer.parseInt(debugPort), true);
+                System.out.println(">>> Keycloak debugging with wait-for-attach is ENABlED. Debug port = " + debugPort);
+            } else {
+                keycloak = new KeycloakContainer(KEYCLOAK_IMAGE)
+                        .withProviderClassesFrom("target/classes")
+                        .withProviderLibsFrom(libs)
+                        .withEnv("DB_VENDOR", "h2");
+            }
+            keycloak.start();
+            masterKeycloakClient = keycloak.getKeycloakAdminClient();
+            masterRealmResource = masterKeycloakClient.realm(MASTER_REALM);
+            UserRepresentation ur = masterRealmResource.users().searchByUsername("admin", true).get(0);
+            masterRealmAdminUser = masterRealmResource.users().get(ur.getId());
+        }
     }
+
 
     @BeforeEach
     public void before() {
 
         // Create the test realm
-        testRealmResource = createRealm("test");
+        testRealmResource = createRealm(TEST_REALM);
 
         // Create the admin user in the test realm
         UserResource admin = createUser("admin", "admin");
 
         // Create an admin client using the admin user's credentials
-        testKeycloakClient = Keycloak.getInstance(keycloak.getAuthServerUrl(), "test", "admin", "admin", ADMIN_CLI_CLIENT);
+        testKeycloakClient = Keycloak.getInstance(keycloak.getAuthServerUrl(), TEST_REALM, "admin", "admin", ADMIN_CLI_CLIENT);
 
         // Give the admin user realm management rights
         addClientRoleToUser(admin, "realm-management", "realm-admin");
@@ -90,7 +90,7 @@ public abstract class GraphQLTest {
 
     @AfterEach
     public void after() {
-        deleteRealm("test");
+        deleteRealm(TEST_REALM);
     }
 
     public static UserResource createUser(String username, String password) {
@@ -178,11 +178,11 @@ public abstract class GraphQLTest {
     }
 
     public ValidatableResponse sendGraphQLRequestAsMasterAdmin(String graphQLRequest) {
-        return sendGraphQLRequestAsUser(graphQLRequest, "master", "admin", "admin");
+        return sendGraphQLRequestAsUser(graphQLRequest, MASTER_REALM, "admin", "admin");
     }
 
     public ValidatableResponse sendGraphQLRequestAsTestAdmin(String graphQLRequest) {
-        return sendGraphQLRequestAsUser(graphQLRequest, "test", "admin", "admin");
+        return sendGraphQLRequestAsUser(graphQLRequest, TEST_REALM, "admin", "admin");
     }
 
     public ValidatableResponse sendGraphQLRequestAsUser(String graphQLRequest, String realmName, String username, String password) {
@@ -208,6 +208,9 @@ public abstract class GraphQLTest {
         return response;
     }
 
+    protected RequestSpecification givenSpec() {
+        return givenSpec(TEST_REALM);
+    }
     protected RequestSpecification givenSpec(String realmName) {
         return given().baseUri(keycloak.getAuthServerUrl()).basePath("/realms/" + realmName + "/" + GraphQLResourceProviderFactory.PROVIDER_ID);
     }

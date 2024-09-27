@@ -1,6 +1,7 @@
 package net.brianlevine.keycloak.graphql.util;
 
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -8,9 +9,9 @@ import java.util.List;
 public class Page<T> {
     private final int totalItems;
     private final int totalPages;
-    private final List<T> items;
+    private final Collection<T> items;
 
-    public Page(int totalItems, int pageSize, List<T> items) {
+    public Page(int totalItems, int pageSize, Collection<T> items) {
         this.totalItems = totalItems;
         this.totalPages = (int) ((double)totalItems / (double)pageSize);
         this.items = items;
@@ -25,7 +26,7 @@ public class Page<T> {
         return totalItems;
     }
 
-    public List<T> getItems() {
+    public Collection<T> getItems() {
         return items;
     }
 

@@ -10,6 +10,7 @@ import io.leangen.graphql.annotations.types.GraphQLType;
 import net.brianlevine.keycloak.graphql.util.Auth;
 import net.brianlevine.keycloak.graphql.util.Page;
 
+import net.brianlevine.keycloak.graphql.util.PagedMap;
 import net.brianlevine.keycloak.graphql.util.Util;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.GroupModel;
@@ -52,7 +53,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
     public RealmType(KeycloakSession kcSession, RealmModel realmModel) {
-        this(kcSession, ModelToRepresentation.toRepresentation(kcSession, realmModel, true));
+        this(kcSession, ModelToRepresentation.toRepresentation(kcSession, realmModel, false));
         this.realmModel = realmModel;
     }
 
@@ -687,14 +688,6 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     public Map<String, String> getSmtpServer() {
         return delegate.getSmtpServer();
     }
-
-
-    //TODO: Return RoleType
-
-//    public RolesRepresentation getRoles() {
-//        return delegate.getRoles();
-//    }
-
 
 
     public String getLoginTheme() {
@@ -1503,8 +1496,9 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
-    public Map<String, String> getAttributes() {
-        return delegate.getAttributes();
+    @GraphQLQuery
+    public PagedMap<String, String> getAttributes(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+        return new PagedMap<>(delegate.getAttributes(), start, limit);
     }
 
 
