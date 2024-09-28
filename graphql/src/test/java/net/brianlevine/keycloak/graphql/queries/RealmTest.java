@@ -8,7 +8,7 @@ import org.keycloak.admin.client.resource.UserResource;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class RealmTest extends raphQLTest {
+public class RealmTest extends GraphQLTest {
 
     @Test
     public void shouldReturnTheDefaultRealm() {
