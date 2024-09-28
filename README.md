@@ -121,6 +121,36 @@ The ordering of items
 in paged queries is determined by the underlying Keycloak REST code. Specifying explicit ordering and filtering will 
 eventually be supported for all queries that return collections.
 
+
+### Get the users in the current realm and their attributes, roles, and groups
+```graphql
+query {
+  realm {
+		users {
+      items {
+        id
+        username
+        firstName
+        lastName
+        attributes
+        roles {
+          items {
+            name
+            clientRole
+          }
+        }
+        groups {
+          items {
+            name
+            path
+          }
+        }
+      }
+    }
+  }
+}
+```
+
 ### Get the current authenticated user (the user making the call to the GraphQL endpoint)
 
 ```graphql
