@@ -25,11 +25,14 @@ import java.util.List;
 import static dasniko.testcontainers.keycloak.ExtendableKeycloakContainer.ADMIN_CLI_CLIENT;
 import static io.restassured.RestAssured.given;
 
-public abstract class GraphQLTest {
+public abstract class KeycloakGraphQLTest {
     public final static String TEST_REALM = "test";
     public final static String MASTER_REALM = "master";
+    public final static int NUM_FIXTURE_REALMS = 2;
+
     private final static String KEYCLOAK_VERSION = "25.0.2";
     private final static String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:" + KEYCLOAK_VERSION;
+
 
     public static KeycloakContainer keycloak;
     public static Keycloak masterKeycloakClient;
@@ -37,6 +40,8 @@ public abstract class GraphQLTest {
     public static RealmResource masterRealmResource;
     public static RealmResource testRealmResource;
     public static UserResource masterRealmAdminUser;
+
+
 
     @BeforeAll
     public static void beforeAll() {

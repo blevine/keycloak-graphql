@@ -14,10 +14,8 @@ import jakarta.ws.rs.core.HttpHeaders;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.utils.ModelToRepresentation;
-import org.keycloak.protocol.oidc.TokenManager;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.services.resources.admin.AdminAuth;
-import org.keycloak.services.resources.admin.RealmsAdminResource;
 import org.keycloak.services.resources.admin.permissions.AdminPermissions;
 
 
@@ -37,18 +35,16 @@ public class RealmQuery {
         AdminAuth auth = Auth.authenticateRealmAdminRequest(session, headers);
         Page<RealmType> ret;
 
-
-        // TODO: If we use ExportUtils.exportRealm() we could get more realm information into the realm
-        //       representation. If we do that, we might want to look at the GraphQL query to set the
-        //       ExportOptions. OR, maybe we just want to have our own version of exportRealm() with even finer-
-        //       grained options based on what fields were requested in the GraphQL query
-
-        RealmsAdminResource rar = new RealmsAdminResource(session, auth, new TokenManager());
         try {
-            List<RealmRepresentation> realms = rar.getRealms(false).toList();
-            List<RealmType> realmTypes = realms.stream().map(rep -> rep != null ? new RealmType(session, rep) : null)
+            List<RealmRepresentation> realms = session.realms().getRealmsStream()
+                    .map(realm -> toRealmRep(session, auth, realm))
                     .filter(Objects::nonNull)
                     .toList();
+
+            List<RealmType> realmTypes = realms.stream()
+                    .map(rep -> rep != null ? new RealmType(session, rep) : null)
+                    .toList();
+
             ret = new Page<>(realms.size(), limit, realmTypes);
         } catch (ForbiddenException e) {
             ret = Page.emptyPage();
@@ -102,7 +98,11 @@ public class RealmQuery {
      */
     protected RealmRepresentation toRealmRep(KeycloakSession session, AdminAuth auth, RealmModel realm) {
         if (AdminPermissions.realms(session, auth).canView(realm)) {
-            return ModelToRepresentation.toRepresentation(session, realm, false);
+            // TODO: Choice of adding additional fields to RealmRepresentation by setting export and internal
+            //       arguments. Setting both to true gets us the most fields. Is this OK?
+            final boolean internal = true;
+            final boolean export = true;
+            return ModelToRepresentation.toRepresentation(session, realm, internal, export);
         } else if (AdminPermissions.realms(session, auth).isAdmin(realm)) {
             RealmRepresentation rep = new RealmRepresentation();
             rep.setRealm(realm.getName());

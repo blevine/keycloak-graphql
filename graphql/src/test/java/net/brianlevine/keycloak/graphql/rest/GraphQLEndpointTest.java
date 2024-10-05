@@ -2,7 +2,7 @@ package net.brianlevine.keycloak.graphql.rest;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import net.brianlevine.keycloak.graphql.GraphQLTest;
+import net.brianlevine.keycloak.graphql.KeycloakGraphQLTest;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
@@ -10,7 +10,7 @@ import org.keycloak.representations.AccessTokenResponse;
 
 import static dasniko.testcontainers.keycloak.ExtendableKeycloakContainer.ADMIN_CLI_CLIENT;
 
-public class GraphQLEndpointTest extends GraphQLTest {
+public class GraphQLEndpointTest extends KeycloakGraphQLTest {
 
 	@Test
 	public void testSchemaEndpoint() {

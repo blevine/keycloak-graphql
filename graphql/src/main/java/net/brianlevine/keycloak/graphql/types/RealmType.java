@@ -9,9 +9,9 @@ import io.leangen.graphql.annotations.types.GraphQLType;
 
 import net.brianlevine.keycloak.graphql.util.Auth;
 import net.brianlevine.keycloak.graphql.util.Page;
-
-import net.brianlevine.keycloak.graphql.util.PagedMap;
 import net.brianlevine.keycloak.graphql.util.Util;
+import org.keycloak.common.util.MultivaluedHashMap;
+import org.keycloak.exportimport.util.ExportUtils;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
@@ -20,7 +20,12 @@ import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.models.utils.ModelToRepresentation;
+import org.keycloak.representations.idm.ClientPoliciesRepresentation;
+import org.keycloak.representations.idm.ClientProfileRepresentation;
+import org.keycloak.representations.idm.ClientProfilesRepresentation;
+import org.keycloak.representations.idm.ComponentExportRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
+import org.keycloak.representations.idm.OrganizationRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -36,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -156,16 +162,17 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
     @GraphQLQuery
-    public Page<UserType> getUsers(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit, @GraphQLRootContext GraphQLContext ctx) {
+    //public Page<UserType> getUsers(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit, @GraphQLRootContext GraphQLContext ctx) {
+    public Page<UserType> getUsers(@GraphQLArgument(name="args") StdCollectionArgs collectionArgs,  @GraphQLRootContext GraphQLContext ctx) {
         RealmModel realm = kcSession.realms().getRealm(getId());
         UserPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx, getRealmModel()).users();
 
-        Stream<UserModel> userModels = kcSession.users().searchForUserStream(realm, Collections.emptyMap(), start, limit);
+        Stream<UserModel> userModels = kcSession.users().searchForUserStream(realm, Collections.emptyMap(), collectionArgs.start, collectionArgs.limit);
         Stream<UserRepresentation> userReps =  RealmType.toUserRepresentation(kcSession, realm, eval, userModels);
         List<UserType> userTypes = userReps.map(u -> new UserType(kcSession, realm, u)).toList();
 
         int userCount = userTypes.size();
-        Page<UserType> page = new Page<>(userCount, limit, userTypes);
+        Page<UserType> page = new Page<>(userCount, collectionArgs.limit, userTypes);
 
         return page;
     }
@@ -1335,19 +1342,39 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
-//    public ClientProfilesRepresentation getParsedClientProfiles() {
-//        return delegate.getParsedClientProfiles();
-//    }
-//
-//
-//    public void setParsedClientProfiles(ClientProfilesRepresentation clientProfiles) {
-//        delegate.setParsedClientProfiles(clientProfiles);
-//    }
-//
-//
-//    public ClientPoliciesRepresentation getParsedClientPolicies() {
-//        return delegate.getParsedClientPolicies();
-//    }
+    @GraphQLQuery
+    public Page<ClientProfileType> getClientProfiles(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100") int limit) {
+        Page<ClientProfileType> ret = Page.emptyPage();
+
+        ClientProfilesRepresentation rep = delegate.getParsedClientProfiles();
+
+        if (rep != null) {
+            List<ClientProfileRepresentation> profiles = rep.getProfiles();
+            List<ClientProfileType> cpt = profiles.stream().skip(start).limit(limit).map(ClientProfileType::new).toList();
+            ret = new Page<>(profiles.size(), limit, cpt);
+        }
+
+        return ret;
+    }
+
+    @GraphQLQuery
+    public Page<ClientProfileType> getGlobalClientProfiles(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100") int limit) {
+        Page<ClientProfileType> ret = Page.emptyPage();
+
+        ClientProfilesRepresentation rep = delegate.getParsedClientProfiles();
+
+        if (rep != null) {
+            List<ClientProfileRepresentation> profiles = rep.getGlobalProfiles();
+            List<ClientProfileType> cpt = profiles.stream().skip(start).limit(limit).map(ClientProfileType::new).toList();
+            ret = new Page<>(profiles.size(), limit, cpt);
+        }
+
+        return ret;
+    }
+
+    public ClientPoliciesRepresentation getParsedClientPolicies() {
+        return delegate.getParsedClientPolicies();
+    }
 //
 //
 //    public void setParsedClientPolicies(ClientPoliciesRepresentation clientPolicies) {
@@ -1434,52 +1461,51 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
         delegate.setKeycloakVersion(keycloakVersion);
     }
 
-//
-//
-//    public void setGroups(List<GroupRepresentation> groups) {
-//        delegate.setGroups(groups);
-//    }
+    public Page<ClientScopeType> getClientScopes(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+        List<ClientScopeType> clientScopes = delegate.getClientScopes().stream().skip(start).limit(limit).map(ClientScopeType::new).toList();
+        return new Page<>(clientScopes.size(), limit, clientScopes);
+    }
 
-
-    //public List<ClientTemplateRepresentation> getClientTemplates() {
-    //    return delegate.getClientTemplates();
-    //}
-
-
-//    public List<ClientScopeRepresentation> getClientScopes() {
-//        return delegate.getClientScopes();
-//    }
-//
-//
 //    public void setClientScopes(List<ClientScopeRepresentation> clientScopes) {
 //        delegate.setClientScopes(clientScopes);
 //    }
 
 
-    public List<String> getDefaultDefaultClientScopes() {
-        return delegate.getDefaultDefaultClientScopes();
-    }
-
-
-    public void setDefaultDefaultClientScopes(List<String> defaultDefaultClientScopes) {
-        delegate.setDefaultDefaultClientScopes(defaultDefaultClientScopes);
-    }
-
-
-    public List<String> getDefaultOptionalClientScopes() {
-        return delegate.getDefaultOptionalClientScopes();
-    }
-
-
-    public void setDefaultOptionalClientScopes(List<String> defaultOptionalClientScopes) {
-        delegate.setDefaultOptionalClientScopes(defaultOptionalClientScopes);
-    }
+//    public List<String> getDefaultDefaultClientScopes() {
+//        return delegate.getDefaultDefaultClientScopes();
+//    }
+//
+//
+//    public void setDefaultDefaultClientScopes(List<String> defaultDefaultClientScopes) {
+//        delegate.setDefaultDefaultClientScopes(defaultDefaultClientScopes);
+//    }
+//
+//
+//    public List<String> getDefaultOptionalClientScopes() {
+//        return delegate.getDefaultOptionalClientScopes();
+//    }
+//
+//
+//    public void setDefaultOptionalClientScopes(List<String> defaultOptionalClientScopes) {
+//        delegate.setDefaultOptionalClientScopes(defaultOptionalClientScopes);
+//    }
 
 
 //    public MultivaluedHashMap<String, ComponentExportRepresentation> getComponents() {
 //        return delegate.getComponents();
 //    }
-//
+
+    @GraphQLQuery
+    public ComponentMap getComponents(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+        RealmModel realm = getRealmModel();
+        MultivaluedHashMap<String, ComponentExportRepresentation> components = ExportUtils.exportComponents(realm, realm.getId());
+
+        Map<String, List<ComponentType>> comps = components.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(ComponentType::new).toList()));
+
+        return new ComponentMap(comps, start, limit);
+    }
+
 //
 //    public void setComponents(MultivaluedHashMap<String, ComponentExportRepresentation> components) {
 //        delegate.setComponents(components);
@@ -1497,15 +1523,23 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 
 
     @GraphQLQuery
-    public PagedMap<String, String> getAttributes(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
-        return new PagedMap<>(delegate.getAttributes(), start, limit);
+    public AttributeMap getAttributes(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+        return new AttributeMap(delegate.getAttributes(), start, limit);
     }
 
 
-    //TODO: Return UserType
-//    public List<UserRepresentation> getFederatedUsers() {
-//        return delegate.getFederatedUsers();
-//    }
+
+    @GraphQLQuery
+    public Page<UserType> getFederatedUsers(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+        List<UserRepresentation> federatedUsers = delegate.getFederatedUsers();
+        List<UserType> users = federatedUsers.stream()
+                .skip(start)
+                .limit(limit)
+                .map(f -> new UserType(getKeycloakSession(), getRealmModel(), f))
+                .toList();
+
+        return new Page<>(federatedUsers.size(), limit, users);
+    }
 //
 //
 //    public void setFederatedUsers(List<UserRepresentation> federatedUsers) {
@@ -1538,9 +1572,12 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
-//    public List<OrganizationRepresentation> getOrganizations() {
-//        return delegate.getOrganizations();
-//    }
+    public Page<OrganizationType> getOrganizations(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+        List<OrganizationRepresentation> organizations = delegate.getOrganizations();
+        List<OrganizationType> organizationTypes = organizations.stream().skip(start).limit(100).map(o -> new OrganizationType(getKeycloakSession(), o)).toList();
+
+        return new Page<>(organizations.size(), limit, organizationTypes);
+    }
 //
 //
 //    public void setOrganizations(List<OrganizationRepresentation> organizations) {
