@@ -15,13 +15,10 @@ import java.util.stream.Stream;
 public interface RoleHolder extends BaseType {
 
     @GraphQLQuery
-    default Page<RoleType> getRoles(
-            @GraphQLArgument(defaultValue = "0") int start,
-            @GraphQLArgument(defaultValue = "100") int limit,
-            @GraphQLRootContext GraphQLContext ctx) {
+    default Page<RoleType> getRoles(PagingOptions options, @GraphQLRootContext GraphQLContext ctx) {
 
         long count = getRolesCount(ctx);
-        Stream<RoleModel> roles = getRolesStream(start, limit, ctx);
+        Stream<RoleModel> roles = getRolesStream(options.start, options.limit, ctx);
 
 
         List<RoleType> roleTypes = roles.map(r -> {
@@ -29,7 +26,7 @@ public interface RoleHolder extends BaseType {
             return new RoleType(getKeycloakSession(), getRealmModel(), roleRep);
         }).toList();
 
-        return new Page<>((int) count, limit, roleTypes);
+        return new Page<>((int) count, options.limit, roleTypes);
     }
 
     // Note: Implementations should make these as @GraphQLIgnore

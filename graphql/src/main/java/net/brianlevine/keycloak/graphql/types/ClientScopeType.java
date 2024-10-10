@@ -42,14 +42,16 @@ public class ClientScopeType {
         delegate.setDescription(description);
     }
 
-    public Page<ProtocolMapperType> getProtocolMappers(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+    public Page<ProtocolMapperType> getProtocolMappers(PagingOptions options) {
+        options = options == null ? new PagingOptions() : options;
+
         List<ProtocolMapperType> pms = delegate.getProtocolMappers().stream()
-                .skip(start)
-                .limit(limit)
+                .skip(options.start)
+                .limit(options.limit)
                 .map(ProtocolMapperType::new)
                 .toList();
 
-        return new Page<>(pms.size(), limit, pms);
+        return new Page<>(pms.size(), options.limit, pms);
     }
 
     public void setProtocolMappers(List<ProtocolMapperRepresentation> protocolMappers) {
@@ -64,8 +66,8 @@ public class ClientScopeType {
         delegate.setProtocol(protocol);
     }
 
-    public AttributeMap getAttributes(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
-        return new AttributeMap(delegate.getAttributes(), start, limit);
+    public AttributeMap getAttributes(PagingOptions options) {
+        return new AttributeMap(delegate.getAttributes(), options.start, options.limit);
     }
 
     public void setAttributes(Map<String, String> attributes) {

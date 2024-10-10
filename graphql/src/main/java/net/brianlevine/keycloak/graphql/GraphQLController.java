@@ -12,11 +12,9 @@ import jakarta.ws.rs.core.HttpHeaders;
 import net.brianlevine.keycloak.graphql.queries.ErrorQuery;
 import net.brianlevine.keycloak.graphql.queries.RealmQuery;
 import net.brianlevine.keycloak.graphql.queries.UserQuery;
-
 import net.brianlevine.keycloak.graphql.util.OverrideTypeInfoGenerator;
 import org.keycloak.models.KeycloakSession;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,9 +66,6 @@ public class GraphQLController {
         return executionResult.toSpecification();
     }
 
-    public Map<String, Object> executeQuery(String query, String operationName, KeycloakSession session, Request request, HttpHeaders headers) {
-        return executeQuery(query, operationName, session, request, headers, Collections.emptyMap());
-    }
 
     public String printSchema() {
 

@@ -1,6 +1,7 @@
 package net.brianlevine.keycloak.graphql.types;
 
 import io.leangen.graphql.annotations.GraphQLArgument;
+import io.leangen.graphql.annotations.GraphQLQuery;
 import io.leangen.graphql.annotations.types.GraphQLType;
 import net.brianlevine.keycloak.graphql.util.Page;
 import org.keycloak.representations.idm.ClientPolicyExecutorRepresentation;
@@ -34,15 +35,18 @@ public class ClientProfileType {
         delegate.setDescription(description);
     }
 
-    public Page<ClientPolicyExecutorType> getExecutors(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+    @GraphQLQuery
+    public Page<ClientPolicyExecutorType> getExecutors(PagingOptions options) {
         List<ClientPolicyExecutorRepresentation> executors = delegate.getExecutors();
+
+        options = options == null ? new PagingOptions() : options;
         List<ClientPolicyExecutorType> ets = executors.stream()
-                .skip(start)
-                .limit(limit)
+                .skip(options.start)
+                .limit(options.limit)
                 .map(ClientPolicyExecutorType::new)
                 .toList();
 
-        return new Page<>(executors.size(), limit, ets);
+        return new Page<>(executors.size(), options.limit, ets);
     }
 
     public void setExecutors(List<ClientPolicyExecutorRepresentation> executors) {

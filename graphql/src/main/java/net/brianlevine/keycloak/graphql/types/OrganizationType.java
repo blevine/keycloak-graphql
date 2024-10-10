@@ -57,8 +57,10 @@ public class OrganizationType {
     }
 
     @GraphQLQuery
-    public MultiAttributeMap getAttributes(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
-        return new MultiAttributeMap(delegate.getAttributes(), start, limit);
+    public MultiAttributeMap getAttributes(PagingOptions options) {
+        options = options == null ? new PagingOptions() : options;
+
+        return new MultiAttributeMap(delegate.getAttributes(), options.start, options.limit);
     }
 //
 //    public void setAttributes(Map<String, List<String>> attributes) {
@@ -72,9 +74,11 @@ public class OrganizationType {
 //        return delegate;
 //    }
 
-    public Page<OrganizationDomainType> getDomains(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+    public Page<OrganizationDomainType> getDomains(PagingOptions options) {
         Set<OrganizationDomainRepresentation> domains =  delegate.getDomains();
-        return new Page<>(domains.size(), limit, domains.stream().skip(start).limit(limit).map(OrganizationDomainType::new).toList());
+        options = options == null ? new PagingOptions() : options;
+
+        return new Page<>(domains.size(), options.limit, domains.stream().skip(options.start).limit(options.limit).map(OrganizationDomainType::new).toList());
     }
 
     public OrganizationDomainType getDomain(String name) {
@@ -93,15 +97,18 @@ public class OrganizationType {
 //        getDomains().remove(domain);
 //    }
 
-    public Page<UserType> getMembers(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+    public Page<UserType> getMembers(PagingOptions options) {
         List<UserRepresentation> members =  delegate.getMembers();
+
+        options = options == null ? new PagingOptions() : options;
+
         List<UserType> users = members.stream()
-                .skip(start)
-                .limit(limit)
+                .skip(options.start)
+                .limit(options.limit)
                 .map(u -> new UserType(kcSession, kcSession.getContext().getRealm(), u))
                 .toList();
 
-        return new Page<>(members.size(), limit, users);
+        return new Page<>(members.size(), options.limit, users);
     }
 
 //    public void setMembers(List<UserRepresentation> members) {
@@ -115,15 +122,16 @@ public class OrganizationType {
 //        delegate.getMembers().add(user);
 //    }
 
-    public Page<IdentityProviderType> getIdentityProviders(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+    public Page<IdentityProviderType> getIdentityProviders(PagingOptions options) {
         List<IdentityProviderRepresentation> identityProviders =  delegate.getIdentityProviders();
+        options = options == null ? new PagingOptions() : options;
         List<IdentityProviderType> idps = identityProviders.stream()
-                .skip(start)
-                .limit(limit)
+                .skip(options.start)
+                .limit(options.limit)
                 .map(IdentityProviderType::new)
                 .toList();
 
-        return new Page<>(identityProviders.size(), limit, idps);
+        return new Page<>(identityProviders.size(), options.limit, idps);
     }
 
 //    public void setIdentityProviders(List<IdentityProviderRepresentation> identityProviders) {

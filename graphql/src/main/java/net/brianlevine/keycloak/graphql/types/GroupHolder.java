@@ -12,19 +12,16 @@ import java.util.stream.Stream;
 
 public interface GroupHolder extends BaseType {
     @GraphQLQuery
-    default Page<GroupType> getGroups(
-            @GraphQLArgument(defaultValue = "0") int start,
-            @GraphQLArgument(defaultValue = "100") int limit,
-            @GraphQLRootContext GraphQLContext ctx) {
-
+    default Page<GroupType> getGroups(PagingOptions options, @GraphQLRootContext GraphQLContext ctx) {
+        options = options == null ? new PagingOptions() : options;
         long totalCount = getGroupsCount(ctx);
-        Stream<GroupModel> groupModels = getGroupsStream(start, limit, ctx);
+        Stream<GroupModel> groupModels = getGroupsStream(options.start, options.limit, ctx);
 
         KeycloakSession kcSession = getKeycloakSession();
         RealmModel realmModel = getRealmModel();
         List<GroupType> groups = groupModels.map(gm -> new GroupType(kcSession, realmModel, gm)).toList();
 
-        return new Page<>((int) totalCount, limit, groups);
+        return new Page<>((int) totalCount, options.limit, groups);
     }
 
     // Note: Implementations should make these as @GraphQLIgnore

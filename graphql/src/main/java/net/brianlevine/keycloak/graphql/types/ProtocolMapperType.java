@@ -47,9 +47,11 @@ public class ProtocolMapperType {
         delegate.setProtocolMapper(protocolMapper);
     }
 
-    public AttributeMap getConfig(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+    public AttributeMap getConfig(PagingOptions options) {
+        options = options == null ? new PagingOptions() : options;
 
-        return new AttributeMap(delegate.getConfig(), start, limit);
+
+        return new AttributeMap(delegate.getConfig(), options.start, options.limit);
     }
 
     public void setConfig(Map<String, String> config) {

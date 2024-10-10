@@ -92,7 +92,7 @@ public class RoleType implements BaseType {
     }
 
     @GraphQLQuery(name = "compositeRoles")
-    public Page<RoleType> getComposites(@GraphQLArgument(defaultValue = "0") int start, @GraphQLArgument(defaultValue = "100") int limit) {
+    public Page<RoleType> getComposites(PagingOptions options) {
         JpaConnectionProvider connection = kcSession.getProvider(JpaConnectionProvider.class);
         EntityManager em = connection.getEntityManager();
 
@@ -105,11 +105,12 @@ public class RoleType implements BaseType {
 //
 //        long count = (long)q.getSingleResult();
 
+        options = options == null ? new PagingOptions() : options;
         long count = getRoleModel().getCompositesStream().count();
-        Stream<RoleModel> composites = getRoleModel().getCompositesStream(null, start, limit);
+        Stream<RoleModel> composites = getRoleModel().getCompositesStream(null, options.start, options.limit);
         List<RoleType> items = composites.map(c -> new RoleType(kcSession, realm, c)).toList();
 
-        return new Page<>((int)count, limit, items);
+        return new Page<>((int)count, options.limit, items);
     }
 
 

@@ -18,6 +18,7 @@ import org.keycloak.services.resource.RealmResourceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Map;
 
 
@@ -52,16 +53,23 @@ public class GraphQLResourceProvider implements RealmResourceProvider {
 	public Response postGraphQL(Map<String, Object> body, @Context Request request, @Context HttpHeaders headers) throws JsonProcessingException {
 		String query = (String)body.get("query");
 		String operationName = (String)body.get("operationName");
-		//String variables = (String)body.get("variables");
+		Object variables = body.get("variables");
 
-		// TODO: Deal with variables.
+		@SuppressWarnings("unchecked")
+		Map<String, Object> result = graphql.executeQuery(
+				query,
+				operationName,
+				session,
+				request,
+				headers,
+				variables != null ? (Map<String, Object>) variables : Collections.emptyMap());
 
-		Map<String, Object> result = graphql.executeQuery(query, operationName, session, request, headers);
 		ObjectMapper mapper = new ObjectMapper();
-		mapper.enable(SerializationFeature.WRITE_NULL_MAP_VALUES);
+
+        //noinspection deprecation
+        mapper.enable(SerializationFeature.WRITE_NULL_MAP_VALUES);
 		String s = mapper.writeValueAsString(result);
 
-		//return Response.ok(s).header("Access-Control-Allow-Origin", "*").header("Access-Control-Allow-Credentials", "true").build();
 		return Response.ok(s).build();
 	}
 

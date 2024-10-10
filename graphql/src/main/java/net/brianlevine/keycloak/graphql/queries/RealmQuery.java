@@ -1,6 +1,7 @@
 package net.brianlevine.keycloak.graphql.queries;
 
 import jakarta.ws.rs.ForbiddenException;
+import net.brianlevine.keycloak.graphql.types.PagingOptions;
 import net.brianlevine.keycloak.graphql.util.Page;
 import net.brianlevine.keycloak.graphql.util.Auth;
 
@@ -25,10 +26,7 @@ import java.util.Objects;
 public class RealmQuery {
 
     @GraphQLQuery(name = "realms", description = "Return a collection of realms that are viewable by the caller.")
-    public Page<RealmType> getRealms(
-            @GraphQLRootContext GraphQLContext ctx,
-            @GraphQLArgument(name="limit", defaultValue = "100") int limit,
-            @GraphQLArgument(name="start", defaultValue = "0") int start) {
+    public Page<RealmType> getRealms(PagingOptions options, @GraphQLRootContext GraphQLContext ctx) {
 
         KeycloakSession session = ctx.get("keycloak.session");
         HttpHeaders headers = ctx.get("headers");
@@ -41,11 +39,15 @@ public class RealmQuery {
                     .filter(Objects::nonNull)
                     .toList();
 
+            options = options == null ? new PagingOptions() : options;
+
             List<RealmType> realmTypes = realms.stream()
+                    .skip(options.start)
+                    .limit(options.limit)
                     .map(rep -> rep != null ? new RealmType(session, rep) : null)
                     .toList();
 
-            ret = new Page<>(realms.size(), limit, realmTypes);
+            ret = new Page<>(realms.size(), options.limit, realmTypes);
         } catch (ForbiddenException e) {
             ret = Page.emptyPage();
         }

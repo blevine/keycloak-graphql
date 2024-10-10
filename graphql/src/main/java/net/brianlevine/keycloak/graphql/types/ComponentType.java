@@ -54,10 +54,11 @@ public class ComponentType {
     }
 
     @GraphQLQuery
-    public MultiAttributeMap getConfig(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+    public MultiAttributeMap getConfig(PagingOptions options) {
         MultivaluedMap<String, String> config = delegate.getConfig();
+        options = options == null ? new PagingOptions() : options;
 
-        return new MultiAttributeMap(config, start, limit);
+        return new MultiAttributeMap(config, options.start, options.limit);
     }
 
 //    public void setConfig(MultivaluedHashMap<String, String> config) {
@@ -73,14 +74,14 @@ public class ComponentType {
 //    }
 
     @GraphQLQuery
-    public ComponentMap getSubComponents(@GraphQLArgument(defaultValue = "0")int start, @GraphQLArgument(defaultValue = "100")int limit) {
+    public ComponentMap getSubComponents(PagingOptions options) {
         MultivaluedHashMap<String, ComponentExportRepresentation> subComponents = delegate.getSubComponents();
 
         Map<String, List<ComponentType>> subs = subComponents != null
                 ? subComponents.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(ComponentType::new).toList()))
                 : new MultivaluedHashMap<>();
-
-        return new ComponentMap(subs, start, limit);
+        options = options == null ? new PagingOptions() : options;
+        return new ComponentMap(subs, options.start, options.limit);
     }
 
 //    public void setSubComponents(MultivaluedHashMap<String, ComponentExportRepresentation> subComponents) {

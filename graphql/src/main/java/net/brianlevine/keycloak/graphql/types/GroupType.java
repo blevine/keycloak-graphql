@@ -147,10 +147,7 @@ public class GroupType implements RoleHolder, BaseType {
 //    }
 
     @GraphQLQuery
-    public Page<GroupType> getSubGroups(
-            @GraphQLArgument(defaultValue = "0")int start,
-            @GraphQLArgument(defaultValue = "100")int limit,
-            @GraphQLRootContext GraphQLContext ctx) {
+    public Page<GroupType> getSubGroups(PagingOptions options, @GraphQLRootContext GraphQLContext ctx) {
 
         Page<GroupType> ret;
 
@@ -165,12 +162,14 @@ public class GroupType implements RoleHolder, BaseType {
         if (eval.canView(getGroupModel())) {
             boolean canViewGlobal = eval.canView();
 
+            options = options == null ? new PagingOptions() : options;
+
             long subGroupCount = gm.getSubGroupsStream().filter(g -> canViewGlobal || eval.canView(g)).count();
-            Stream<GroupModel> groupModels = gm.getSubGroupsStream(start, limit).filter(g -> canViewGlobal || eval.canView(g));
+            Stream<GroupModel> groupModels = gm.getSubGroupsStream(options.start, options.limit).filter(g -> canViewGlobal || eval.canView(g));
 
             List<GroupType> groupTypes = groupModels.map(g -> new GroupType(session, realmModel, GroupUtils.toRepresentation(eval, g, true))).toList();
 
-            ret = new Page<>((int)subGroupCount, limit, groupTypes);
+            ret = new Page<>((int)subGroupCount, options.limit, groupTypes);
         }
         else {
             ret = Page.emptyPage();
