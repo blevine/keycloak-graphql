@@ -1,6 +1,6 @@
 package net.brianlevine.keycloak.graphql.types;
 
-import io.leangen.graphql.annotations.GraphQLArgument;
+import io.leangen.graphql.annotations.GraphQLQuery;
 import io.leangen.graphql.annotations.types.GraphQLType;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 
@@ -47,11 +47,9 @@ public class ProtocolMapperType {
         delegate.setProtocolMapper(protocolMapper);
     }
 
+    @GraphQLQuery
     public AttributeMap getConfig(PagingOptions options) {
-        options = options == null ? new PagingOptions() : options;
-
-
-        return new AttributeMap(delegate.getConfig(), options.start, options.limit);
+        return new AttributeMap(delegate.getConfig(), options);
     }
 
     public void setConfig(Map<String, String> config) {

@@ -1,8 +1,11 @@
 package net.brianlevine.keycloak.graphql.types;
 
 import io.leangen.graphql.annotations.GraphQLArgument;
+import io.leangen.graphql.annotations.GraphQLQuery;
 import io.leangen.graphql.annotations.types.GraphQLType;
 import net.brianlevine.keycloak.graphql.util.Page;
+import org.keycloak.models.ClientScopeModel;
+import org.keycloak.models.utils.ModelToRepresentation;
 import org.keycloak.representations.idm.ClientScopeRepresentation;
 import org.keycloak.representations.idm.ProtocolMapperRepresentation;
 
@@ -16,6 +19,10 @@ public class ClientScopeType {
 
     public ClientScopeType(ClientScopeRepresentation clientScopeRepresentation) {
         this.delegate = clientScopeRepresentation;
+    }
+
+    public ClientScopeType(ClientScopeModel clientScopeModel) {
+        this.delegate = ModelToRepresentation.toRepresentation(clientScopeModel);
     }
 
     public String getId() {
@@ -66,8 +73,9 @@ public class ClientScopeType {
         delegate.setProtocol(protocol);
     }
 
+    @GraphQLQuery
     public AttributeMap getAttributes(PagingOptions options) {
-        return new AttributeMap(delegate.getAttributes(), options.start, options.limit);
+        return new AttributeMap(delegate.getAttributes(), options);
     }
 
     public void setAttributes(Map<String, String> attributes) {

@@ -7,6 +7,10 @@ import java.util.Map;
 
 public class ComponentMap extends PagedMap<String, List<ComponentType>, ComponentMap.Entry> {
 
+    public ComponentMap(Map<String, List<ComponentType>> map, PagingOptions options) {
+        this(map, options != null ? options.start : PagingOptions.DEFAULT.start, options != null ? options.limit : PagingOptions.DEFAULT.limit);
+    }
+
     public ComponentMap(Map<String, List<ComponentType>> map, int start, int limit) {
         super(map, start, limit, ComponentMap.Entry.class);
     }

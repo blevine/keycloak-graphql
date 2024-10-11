@@ -13,6 +13,7 @@ import net.brianlevine.keycloak.graphql.util.Util;
 import org.keycloak.common.util.MultivaluedHashMap;
 import org.keycloak.exportimport.util.ExportUtils;
 import org.keycloak.models.ClientModel;
+import org.keycloak.models.ClientScopeModel;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -20,16 +21,8 @@ import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.models.utils.ModelToRepresentation;
-import org.keycloak.representations.idm.ClientPoliciesRepresentation;
-import org.keycloak.representations.idm.ClientPolicyRepresentation;
-import org.keycloak.representations.idm.ClientProfileRepresentation;
-import org.keycloak.representations.idm.ClientProfilesRepresentation;
-import org.keycloak.representations.idm.ComponentExportRepresentation;
-import org.keycloak.representations.idm.GroupRepresentation;
-import org.keycloak.representations.idm.OrganizationRepresentation;
-import org.keycloak.representations.idm.RealmRepresentation;
-import org.keycloak.representations.idm.RoleRepresentation;
-import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.representations.idm.*;
+
 import org.keycloak.services.resources.admin.AdminEventBuilder;
 import org.keycloak.services.resources.admin.GroupResource;
 import org.keycloak.services.resources.admin.UserResource;
@@ -898,9 +891,10 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
-//    public List<UserFederationProviderRepresentation> getUserFederationProviders() {
-//        return delegate.getUserFederationProviders();
-//    }
+    @GraphQLQuery
+    public Page<UserFederationProviderType> getUserFederationProviders(PagingOptions options) {
+        return Page.toPagedType(options, UserFederationProviderType.class, UserFederationProviderRepresentation.class, delegate::getUserFederationProviders);
+    }
 //
 //
 //    public void setUserFederationProviders(List<UserFederationProviderRepresentation> userFederationProviders) {
@@ -908,9 +902,10 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 //    }
 //
 //
-//    public List<UserFederationMapperRepresentation> getUserFederationMappers() {
-//        return delegate.getUserFederationMappers();
-//    }
+    @GraphQLQuery
+    public Page<UserFederationMapperType> getUserFederationMappers(PagingOptions options) {
+        return Page.toPagedType(options, UserFederationMapperType.class, UserFederationMapperRepresentation.class, delegate::getUserFederationMappers);
+    }
 //
 //
 //    public void setUserFederationMappers(List<UserFederationMapperRepresentation> userFederationMappers) {
@@ -923,9 +918,31 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 //    }
 //
 //
-//    public List<IdentityProviderRepresentation> getIdentityProviders() {
-//        return delegate.getIdentityProviders();
-//    }
+    public Page<IdentityProviderType> getIdentityProviders(PagingOptions options) {
+        Page<IdentityProviderType> ret = Page.emptyPage();
+
+        List<IdentityProviderRepresentation> reps = delegate.getIdentityProviders();
+
+        if (reps != null) {
+            options = options != null ? options : new PagingOptions();
+
+            List<IdentityProviderType> idps = reps.stream()
+                    .skip(options.start)
+                    .limit(options.limit)
+                    .map(IdentityProviderType::new)
+                    .toList();
+            ret = new Page<>(reps.size(), options.limit, idps);
+        }
+
+        return ret;
+    }
+
+    public Page<IdentityProviderType>getIdentityProviders2(PagingOptions options) {
+        return Page.toPagedType(options, IdentityProviderType.class, IdentityProviderRepresentation.class, delegate::getIdentityProviders);
+    }
+
+
+
 //
 //
 //    public void setIdentityProviders(List<IdentityProviderRepresentation> identityProviders) {
@@ -938,9 +955,10 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 //    }
 //
 //
-//    public List<ProtocolMapperRepresentation> getProtocolMappers() {
-//        return delegate.getProtocolMappers();
-//    }
+    @GraphQLQuery
+    public Page<ProtocolMapperType> getProtocolMappers(PagingOptions options) {
+        return Page.toPagedType(options, ProtocolMapperType.class, ProtocolMapperRepresentation.class, delegate::getProtocolMappers);
+    }
 //
 //
 //    public void addProtocolMapper(ProtocolMapperRepresentation rep) {
@@ -963,6 +981,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
+    // TODO: Paging
     public Set<String> getSupportedLocales() {
         return delegate.getSupportedLocales();
     }
@@ -988,9 +1007,23 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
-//    public List<IdentityProviderMapperRepresentation> getIdentityProviderMappers() {
-//        return delegate.getIdentityProviderMappers();
-//    }
+    @GraphQLQuery
+    public Page<IdentityProviderMapperType> getIdentityProviderMappers(PagingOptions options) {
+        Page<IdentityProviderMapperType> ret = Page.emptyPage();
+        List<IdentityProviderMapperRepresentation> reps = delegate.getIdentityProviderMappers();
+
+        if (reps != null) {
+            options = options == null ? new PagingOptions() : options;
+
+            List<IdentityProviderMapperType> providers = reps.stream()
+                    .skip(options.start)
+                    .limit(options.limit)
+                    .map(IdentityProviderMapperType::new)
+                    .toList();
+        }
+
+        return ret;
+    }
 //
 //
 //    public void setIdentityProviderMappers(List<IdentityProviderMapperRepresentation> identityProviderMappers) {
@@ -1003,9 +1036,10 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 //    }
 
 
-//    public List<AuthenticationFlowRepresentation> getAuthenticationFlows() {
-//        return delegate.getAuthenticationFlows();
-//    }
+    @GraphQLQuery
+    public Page<AuthenticationFlowType> getAuthenticationFlows(PagingOptions options) {
+        return Page.toPagedType(options, AuthenticationFlowType.class, AuthenticationFlowRepresentation.class, delegate::getAuthenticationFlows);
+    }
 //
 //
 //    public void setAuthenticationFlows(List<AuthenticationFlowRepresentation> authenticationFlows) {
@@ -1013,9 +1047,10 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 //    }
 //
 //
-//    public List<AuthenticatorConfigRepresentation> getAuthenticatorConfig() {
-//        return delegate.getAuthenticatorConfig();
-//    }
+    @GraphQLQuery
+    public Page<AuthenticatorConfigType> getAuthenticatorConfig(PagingOptions options) {
+        return Page.toPagedType(options, AuthenticatorConfigType.class, AuthenticatorConfigRepresentation.class, delegate::getAuthenticatorConfig);
+    }
 //
 //
 //    public void setAuthenticatorConfig(List<AuthenticatorConfigRepresentation> authenticatorConfig) {
@@ -1023,9 +1058,10 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 //    }
 //
 //
-//    public List<RequiredActionProviderRepresentation> getRequiredActions() {
-//        return delegate.getRequiredActions();
-//    }
+    @GraphQLQuery
+    public Page<RequiredActionProviderType> getRequiredActions(PagingOptions options) {
+        return Page.toPagedType(options, RequiredActionProviderType.class, RequiredActionProviderRepresentation.class, delegate::getRequiredActions);
+    }
 //
 //
 //    public void setRequiredActions(List<RequiredActionProviderRepresentation> requiredActions) {
@@ -1093,6 +1129,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
+    // TODO: Paging
     public List<String> getOtpSupportedApplications() {
         return delegate.getOtpSupportedApplications();
     }
@@ -1103,6 +1140,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
+    // TODO: Paging
     public Map<String, Map<String, String>> getLocalizationTexts() {
         return delegate.getLocalizationTexts();
     }
@@ -1133,6 +1171,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
+    // TODO: Paging
     public List<String> getWebAuthnPolicySignatureAlgorithms() {
         return delegate.getWebAuthnPolicySignatureAlgorithms();
     }
@@ -1213,6 +1252,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
+    // TODO: Paging
     public List<String> getWebAuthnPolicyAcceptableAaguids() {
         return delegate.getWebAuthnPolicyAcceptableAaguids();
     }
@@ -1243,6 +1283,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
+    // TODO: Paging
     public List<String> getWebAuthnPolicyPasswordlessSignatureAlgorithms() {
         return delegate.getWebAuthnPolicyPasswordlessSignatureAlgorithms();
     }
@@ -1323,6 +1364,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
+    // TODO: Paging
     public List<String> getWebAuthnPolicyPasswordlessAcceptableAaguids() {
         return delegate.getWebAuthnPolicyPasswordlessAcceptableAaguids();
     }
@@ -1333,6 +1375,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
+    // TODO: Paging
     public List<String> getWebAuthnPolicyPasswordlessExtraOrigins() {
         return delegate.getWebAuthnPolicyPasswordlessExtraOrigins();
     }
@@ -1344,12 +1387,14 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 
 
     @GraphQLQuery
-    public Page<ClientProfileType> getClientProfiles(@GraphQLArgument PagingOptions options) {
+    public Page<ClientProfileType> getClientProfiles(PagingOptions options) {
         Page<ClientProfileType> ret = Page.emptyPage();
 
         ClientProfilesRepresentation rep = delegate.getParsedClientProfiles();
 
         if (rep != null) {
+            options = options == null ? new PagingOptions() : options;
+
             List<ClientProfileRepresentation> profiles = rep.getProfiles();
             List<ClientProfileType> cpt = profiles.stream().skip(options.start).limit(options.limit).map(ClientProfileType::new).toList();
             ret = new Page<>(profiles.size(), options.limit, cpt);
@@ -1359,11 +1404,13 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
     @GraphQLQuery
-    public Page<ClientProfileType> getGlobalClientProfiles(@GraphQLArgument PagingOptions options) {
+    public Page<ClientProfileType> getGlobalClientProfiles(PagingOptions options) {
         Page<ClientProfileType> ret = Page.emptyPage();
         ClientProfilesRepresentation rep = delegate.getParsedClientProfiles();
 
         if (rep != null) {
+            options = options == null ? new PagingOptions() : options;
+
             List<ClientProfileRepresentation> profiles = rep.getGlobalProfiles();
             List<ClientProfileType> cpt = profiles.stream().skip(options.start).limit(options.limit).map(ClientProfileType::new).toList();
             ret = new Page<>(profiles.size(), options.limit, cpt);
@@ -1373,11 +1420,13 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
     @GraphQLQuery
-    public Page<ClientPolicyType> getClientPolicies(@GraphQLArgument PagingOptions options) {
+    public Page<ClientPolicyType> getClientPolicies(PagingOptions options) {
         Page<ClientPolicyType> ret = Page.emptyPage();
         ClientPoliciesRepresentation rep = delegate.getParsedClientPolicies();
 
         if (rep != null) {
+            options = options == null ? new PagingOptions() : options;
+
             List<ClientPolicyRepresentation> policies = rep.getPolicies();
             List<ClientPolicyType> cpt = policies.stream().skip(options.start).limit(options.limit).map(ClientPolicyType::new).toList();
             ret = new Page<>(policies.size(), options.limit, cpt);
@@ -1386,11 +1435,14 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
         return ret;
     }
 
-    public Page<ClientPolicyType> getGlobalClientPolicies(@GraphQLArgument PagingOptions options) {
+    @GraphQLQuery
+    public Page<ClientPolicyType> getGlobalClientPolicies(PagingOptions options) {
         Page<ClientPolicyType> ret = Page.emptyPage();
         ClientPoliciesRepresentation rep = delegate.getParsedClientPolicies();
 
         if (rep != null) {
+            options = options == null ? new PagingOptions() : options;
+
             List<ClientPolicyRepresentation> policies = rep.getGlobalPolicies();
             List<ClientPolicyType> cpt = policies.stream().skip(options.start).limit(options.limit).map(ClientPolicyType::new).toList();
             ret = new Page<>(policies.size(), options.limit, cpt);
@@ -1399,11 +1451,6 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
         return ret;
     }
 
-//    public ClientPoliciesRepresentation getParsedClientPolicies() {
-//        return delegate.getParsedClientPolicies();
-//    }
-//
-//
 //    public void setParsedClientPolicies(ClientPoliciesRepresentation clientPolicies) {
 //        delegate.setParsedClientPolicies(clientPolicies);
 //    }
@@ -1488,9 +1535,9 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
         delegate.setKeycloakVersion(keycloakVersion);
     }
 
-    public Page<ClientScopeType> getClientScopes(@GraphQLArgument PagingOptions options) {
-        List<ClientScopeType> clientScopes = delegate.getClientScopes().stream().skip(options.start).limit(options.limit).map(ClientScopeType::new).toList();
-        return new Page<>(clientScopes.size(), options.limit, clientScopes);
+    @GraphQLQuery
+    public Page<ClientScopeType> getClientScopes(PagingOptions options) {
+        return Page.toPagedType(options, ClientScopeType.class, ClientScopeRepresentation.class, delegate::getClientScopes);
     }
 
 //    public void setClientScopes(List<ClientScopeRepresentation> clientScopes) {
@@ -1498,9 +1545,15 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 //    }
 
 
-//    public List<String> getDefaultDefaultClientScopes() {
-//        return delegate.getDefaultDefaultClientScopes();
-//    }
+    @GraphQLQuery
+    public Page<ClientScopeType> getDefaultDefaultClientScopes(PagingOptions options) {
+        List<ClientScopeModel> cs = getRealmModel().getDefaultClientScopesStream(true).toList();
+        return Page.toPagedType(
+                options,
+                ClientScopeType.class,
+                ClientScopeModel.class,
+                getRealmModel().getDefaultClientScopesStream(false)::toList);
+    }
 //
 //
 //    public void setDefaultDefaultClientScopes(List<String> defaultDefaultClientScopes) {
@@ -1508,9 +1561,15 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 //    }
 //
 //
-//    public List<String> getDefaultOptionalClientScopes() {
-//        return delegate.getDefaultOptionalClientScopes();
-//    }
+    @GraphQLQuery
+    public Page<ClientScopeType> getDefaultOptionalClientScopes(PagingOptions options) {
+        List<ClientScopeModel> cs = getRealmModel().getDefaultClientScopesStream(false).toList();
+        return Page.toPagedType(
+                options,
+                ClientScopeType.class,
+                ClientScopeModel.class,
+                getRealmModel().getDefaultClientScopesStream(false)::toList);
+    }
 //
 //
 //    public void setDefaultOptionalClientScopes(List<String> defaultOptionalClientScopes) {
@@ -1518,19 +1577,15 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 //    }
 
 
-//    public MultivaluedHashMap<String, ComponentExportRepresentation> getComponents() {
-//        return delegate.getComponents();
-//    }
-
     @GraphQLQuery
-    public ComponentMap getComponents(@GraphQLArgument PagingOptions options) {
+    public ComponentMap getComponents(PagingOptions options) {
         RealmModel realm = getRealmModel();
         MultivaluedHashMap<String, ComponentExportRepresentation> components = ExportUtils.exportComponents(realm, realm.getId());
 
         Map<String, List<ComponentType>> comps = components.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(ComponentType::new).toList()));
 
-        return new ComponentMap(comps, options.start, options.limit);
+        return new ComponentMap(comps, options);
     }
 
 //
@@ -1550,8 +1605,8 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 
 
     @GraphQLQuery
-    public AttributeMap getAttributes(@GraphQLArgument PagingOptions options) {
-        return new AttributeMap(delegate.getAttributes(), options.start, options.limit);
+    public AttributeMap getAttributes(PagingOptions options) {
+        return new AttributeMap(delegate.getAttributes(), options);
     }
 
 
@@ -1594,15 +1649,9 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
-    public Map<String, String> getAttributesOrEmpty() {
-        return delegate.getAttributesOrEmpty();
-    }
-
-    public Page<OrganizationType> getOrganizations(@GraphQLArgument PagingOptions options) {
-        List<OrganizationRepresentation> organizations = delegate.getOrganizations();
-        List<OrganizationType> organizationTypes = organizations.stream().skip(options.start).limit(options.limit).map(o -> new OrganizationType(getKeycloakSession(), o)).toList();
-
-        return new Page<>(organizations.size(), options.limit, organizationTypes);
+    @GraphQLQuery
+    public Page<OrganizationType> getOrganizations(PagingOptions options) {
+        return Page.toPagedType(options, OrganizationType.class, OrganizationRepresentation.class, delegate::getOrganizations);
     }
 //
 //

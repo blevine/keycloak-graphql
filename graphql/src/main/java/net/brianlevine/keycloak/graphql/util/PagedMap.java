@@ -2,6 +2,7 @@ package net.brianlevine.keycloak.graphql.util;
 
 import graphql.GraphQLException;
 import io.leangen.graphql.annotations.GraphQLIgnore;
+import net.brianlevine.keycloak.graphql.types.PagingOptions;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -26,6 +27,10 @@ public class PagedMap<K,V,E extends PagedMap.DelegatingEntry<K,V>> {
 
     @SuppressWarnings("rawtypes")
     private final static PagedMap EMPTY_PAGED_MAP = new PagedMap<>(Collections.emptyMap(), 0, 0, DefaultDelegatingEntry.class);
+
+    public PagedMap(Map<K,V> map, PagingOptions options, Class<E> entryClass) {
+        this(map, options != null ? options.start : PagingOptions.DEFAULT.start, options != null ? options.start : PagingOptions.DEFAULT.limit, entryClass);
+    }
 
     public PagedMap(Map<K,V> map, int start, int limit, Class<E> entryClass) {
 

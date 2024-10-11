@@ -10,6 +10,10 @@ public class AttributeMap extends PagedMap<String, String, AttributeMap.Entry> {
         super(map, start, limit, AttributeMap.Entry.class);
     }
 
+    public AttributeMap(Map<String, String> map, PagingOptions options) {
+        super(map, options, AttributeMap.Entry.class);
+    }
+
     public static class Entry extends PagedMap.DelegatingEntry<String, String> implements Map.Entry<String, String> {
         public Entry(Map.Entry<String, String> delegate) {
             super(delegate);

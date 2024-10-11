@@ -81,7 +81,7 @@ public class ComponentType {
                 ? subComponents.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(ComponentType::new).toList()))
                 : new MultivaluedHashMap<>();
         options = options == null ? new PagingOptions() : options;
-        return new ComponentMap(subs, options.start, options.limit);
+        return new ComponentMap(subs, options);
     }
 
 //    public void setSubComponents(MultivaluedHashMap<String, ComponentExportRepresentation> subComponents) {
