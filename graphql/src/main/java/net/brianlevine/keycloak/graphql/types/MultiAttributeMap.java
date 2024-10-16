@@ -7,6 +7,9 @@ import java.util.Map;
 
 public class MultiAttributeMap extends PagedMap<String, List<String>, MultiAttributeMap.Entry> {
 
+    public MultiAttributeMap(Map<String, List<String>> map, PagingOptions options) {
+        this(map, options != null ? options.start : PagingOptions.DEFAULT.start, options != null ? options.limit : PagingOptions.DEFAULT.limit);
+    }
     public MultiAttributeMap(Map<String, List<String>> map, int start, int limit) {
         super(map, start, limit, MultiAttributeMap.Entry.class);
     }

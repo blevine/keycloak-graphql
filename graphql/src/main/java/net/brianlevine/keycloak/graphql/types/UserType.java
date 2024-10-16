@@ -128,8 +128,8 @@ public class UserType implements RoleHolder, GroupHolder, BaseType {
 
 
 
-    public Map<String, List<String>> getAttributes() {
-        return delegate.getAttributes();
+    public MultiAttributeMap getAttributes(PagingOptions options) {
+        return new MultiAttributeMap(delegate.getAttributes(), options);
     }
 
 

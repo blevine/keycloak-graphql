@@ -131,8 +131,8 @@ public class GroupType implements RoleHolder, BaseType {
     //}
 
 
-    public Map<String, List<String>> getAttributes() {
-        return delegate.getAttributes();
+    public MultiAttributeMap getAttributes(PagingOptions options) {
+        return new MultiAttributeMap(delegate.getAttributes(), options);
     }
 
     public void setAttributes(Map<String, List<String>> attributes) {
@@ -182,13 +182,13 @@ public class GroupType implements RoleHolder, BaseType {
     //    delegate.setSubGroups(subGroups);
     //}
 
-    public Map<String, Boolean> getAccess() {
-        return delegate.getAccess();
+    public AccessMap getAccess(PagingOptions options) {
+        return new AccessMap(delegate.getAccess(), options);
     }
 
-    public void setAccess(Map<String, Boolean> access) {
-        delegate.setAccess(access);
-    }
+//    public void setAccess(Map<String, Boolean> access) {
+//        delegate.setAccess(access);
+//    }
 
     //public void merge(GroupRepresentation g) {
     //    merge(delegate, g);

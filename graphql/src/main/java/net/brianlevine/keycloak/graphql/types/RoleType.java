@@ -157,11 +157,11 @@ public class RoleType implements BaseType {
         delegate.setContainerId(containerId);
     }
 
-    public Map<String, List<String>> getAttributes() {
-        return delegate.getAttributes();
+    public MultiAttributeMap getAttributes(PagingOptions options) {
+        return new MultiAttributeMap(delegate.getAttributes(), options);
     }
 
-    public void setAttributes(Map<String, List<String>> attributes) {
-        delegate.setAttributes(attributes);
-    }
+//    public void setAttributes(Map<String, List<String>> attributes) {
+//        delegate.setAttributes(attributes);
+//    }
 }

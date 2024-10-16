@@ -38,8 +38,8 @@ public class IdentityProviderType {
         delegate.setProviderId(providerId);
     }
 
-    public Map<String, String> getConfig() {
-        return delegate.getConfig();
+    public AttributeMap getConfig(PagingOptions options) {
+        return new AttributeMap(delegate.getConfig(), options);
     }
 
     public void setConfig(Map<String, String> config) {

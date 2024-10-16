@@ -56,9 +56,8 @@ public class ComponentType {
     @GraphQLQuery
     public MultiAttributeMap getConfig(PagingOptions options) {
         MultivaluedMap<String, String> config = delegate.getConfig();
-        options = options == null ? new PagingOptions() : options;
 
-        return new MultiAttributeMap(config, options.start, options.limit);
+        return new MultiAttributeMap(config, options);
     }
 
 //    public void setConfig(MultivaluedHashMap<String, String> config) {
@@ -80,7 +79,6 @@ public class ComponentType {
         Map<String, List<ComponentType>> subs = subComponents != null
                 ? subComponents.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(ComponentType::new).toList()))
                 : new MultivaluedHashMap<>();
-        options = options == null ? new PagingOptions() : options;
         return new ComponentMap(subs, options);
     }
 

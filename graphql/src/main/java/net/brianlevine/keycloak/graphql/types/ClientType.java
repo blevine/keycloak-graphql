@@ -290,21 +290,21 @@ public class ClientType implements Container, RoleHolder, BaseType {
         delegate.setProtocol(protocol);
     }
 
-    public Map<String, String> getAttributes() {
-        return delegate.getAttributes();
+    public AttributeMap getAttributes(PagingOptions options) {
+        return new AttributeMap(delegate.getAttributes(), options);
     }
 
-    public void setAttributes(Map<String, String> attributes) {
-        delegate.setAttributes(attributes);
+//    public void setAttributes(Map<String, String> attributes) {
+//        delegate.setAttributes(attributes);
+//    }
+
+    public AuthenticationFlowOverrideMap getAuthenticationFlowBindingOverrides(PagingOptions options) {
+        return new AuthenticationFlowOverrideMap(delegate.getAuthenticationFlowBindingOverrides(), options);
     }
 
-    public Map<String, String> getAuthenticationFlowBindingOverrides() {
-        return delegate.getAuthenticationFlowBindingOverrides();
-    }
-
-    public void setAuthenticationFlowBindingOverrides(Map<String, String> authenticationFlowBindingOverrides) {
-        delegate.setAuthenticationFlowBindingOverrides(authenticationFlowBindingOverrides);
-    }
+//    public void setAuthenticationFlowBindingOverrides(Map<String, String> authenticationFlowBindingOverrides) {
+//        delegate.setAuthenticationFlowBindingOverrides(authenticationFlowBindingOverrides);
+//    }
 
     public Integer getNodeReRegistrationTimeout() {
         return delegate.getNodeReRegistrationTimeout();
@@ -314,13 +314,13 @@ public class ClientType implements Container, RoleHolder, BaseType {
         delegate.setNodeReRegistrationTimeout(nodeReRegistrationTimeout);
     }
 
-    public Map<String, Integer> getRegisteredNodes() {
-        return delegate.getRegisteredNodes();
-    }
+    //public Map<String, Integer> getRegisteredNodes() {
+    //    return delegate.getRegisteredNodes();
+    //}
 
-    public void setRegisteredNodes(Map<String, Integer> registeredNodes) {
-        delegate.setRegisteredNodes(registeredNodes);
-    }
+    //public void setRegisteredNodes(Map<String, Integer> registeredNodes) {
+    //    delegate.setRegisteredNodes(registeredNodes);
+    //}
 
     public Boolean isFrontchannelLogout() {
         return delegate.isFrontchannelLogout();
@@ -382,13 +382,13 @@ public class ClientType implements Container, RoleHolder, BaseType {
 //        delegate.setAuthorizationSettings(authorizationSettings);
 //    }
 
-    public Map<String, Boolean> getAccess() {
-        return delegate.getAccess();
+    public AccessMap getAccess(PagingOptions options) {
+        return new AccessMap(delegate.getAccess(), options);
     }
 
-    public void setAccess(Map<String, Boolean> access) {
-        delegate.setAccess(access);
-    }
+//    public void setAccess(Map<String, Boolean> access) {
+//        delegate.setAccess(access);
+//    }
 
     /**
      * Returns id of ClientStorageProvider that loaded this user

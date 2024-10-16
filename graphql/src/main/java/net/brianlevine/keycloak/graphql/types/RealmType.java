@@ -681,13 +681,12 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
-    public Map<String, String> getBrowserSecurityHeaders() {
-        return delegate.getBrowserSecurityHeaders();
+    public HeaderMap getBrowserSecurityHeaders(PagingOptions options) {
+        return new HeaderMap(delegate.getBrowserSecurityHeaders(), options);
     }
 
-
-    public Map<String, String> getSmtpServer() {
-        return delegate.getSmtpServer();
+    public AttributeMap getSmtpServer(PagingOptions options) {
+        return new AttributeMap(delegate.getSmtpServer(), options);
     }
 
 
@@ -850,7 +849,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
         delegate.setEventsExpiration(eventsExpiration);
     }
 
-
+    // TODO: Paging
     public List<String> getEventsListeners() {
         return delegate.getEventsListeners();
     }
@@ -861,6 +860,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
+    // TODO: Paging
     public List<String> getEnabledEventTypes() {
         return delegate.getEnabledEventTypes();
     }
@@ -1141,14 +1141,14 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 
 
     // TODO: Paging
-    public Map<String, Map<String, String>> getLocalizationTexts() {
-        return delegate.getLocalizationTexts();
-    }
+    //public Map<String, Map<String, String>> getLocalizationTexts() {
+    //    return delegate.getLocalizationTexts();
+    //}
 
 
-    public void setLocalizationTexts(Map<String, Map<String, String>> localizationTexts) {
-        delegate.setLocalizationTexts(localizationTexts);
-    }
+    //public void setLocalizationTexts(Map<String, Map<String, String>> localizationTexts) {
+    //    delegate.setLocalizationTexts(localizationTexts);
+    //}
 
 
     public Boolean isOtpPolicyCodeReusable() {
@@ -1263,6 +1263,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
+    // TODO: Paging
     public List<String> getWebAuthnPolicyExtraOrigins() {
         return delegate.getWebAuthnPolicyExtraOrigins();
     }

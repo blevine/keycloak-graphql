@@ -22,7 +22,6 @@
 		<commons-lang.version>3.14.0</commons-lang.version>
 		<httpclient.version>4.5.14</httpclient.version>
 		<junit.version>5.10.2</junit.version>
-		<lombok.version>1.18.32</lombok.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<quarkus.version>3.8.5</quarkus.version>
 		<restassured.version>5.4.0</restassured.version>
@@ -77,12 +76,6 @@
 				<groupId>org.keycloak</groupId>
 				<artifactId>keycloak-services</artifactId>
 				<version>${keycloak.version}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.projectlombok</groupId>
-				<artifactId>lombok</artifactId>
-				<version>${lombok.version}</version>
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
@@ -171,14 +164,31 @@
 					<artifactId>maven-shade-plugin</artifactId>
 					<version>${maven-shade.version}</version>
 					<configuration>
+						<transformers>
+							<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+						</transformers>
 						<artifactSet>
 							<excludes>
 								<exclude>org.keycloak*</exclude>
 								<exclude>org.apache.httpcomponents:httpcore</exclude>
 								<exclude>com.google*</exclude>
 								<exclude>org.checkerframework*</exclude>
+								<exclude>junit*</exclude>
+								<exclude>org.hamcrest*</exclude>
 							</excludes>
 						</artifactSet>
+						<filters>
+							<filter>
+								<artifact>*:*</artifact>
+								<excludes>
+									<exclude>module-info.class</exclude>
+									<exclude>META-INF/LICENSE</exclude>
+									<exclude>META-INF/NOTICE</exclude>
+									<exclude>META-INF/MANIFEST.MF</exclude>
+									<exclude>META-INF/versions/**</exclude>
+								</excludes>
+							</filter>
+						</filters>
 					</configuration>
 					<executions>
 						<execution>
@@ -202,6 +212,15 @@
 						</properties>
 					</configuration>
 				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>2.4</version>
+					<configuration>
+						<forceCreation>true</forceCreation>
+					</configuration>
+				</plugin>
+
 			</plugins>
 		</pluginManagement>
 	</build>

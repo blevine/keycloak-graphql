@@ -65,10 +65,6 @@ public class AuthenticationFlowType implements Serializable {
         delegate.setBuiltIn(builtIn);
     }
 
-    public List<AuthenticationExecutionExportRepresentation> getAuthenticationExecutions() {
-        return delegate.getAuthenticationExecutions();
-    }
-
     public Page<AuthenticationExecutionExportType> getAuthenticationExecutions(PagingOptions options) {
         return Page.toPagedType(
                 options,
