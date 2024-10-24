@@ -18,6 +18,7 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.testcontainers.junit.jupiter.Container;
 
 import java.io.File;
 import java.util.List;
@@ -30,7 +31,7 @@ public abstract class KeycloakGraphQLTest {
     public final static String MASTER_REALM = "master";
     public final static int NUM_FIXTURE_REALMS = 2;
 
-    private final static String KEYCLOAK_VERSION = "25.0.2";
+    private final static String KEYCLOAK_VERSION = "26.0.1";
     private final static String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:" + KEYCLOAK_VERSION;
 
 

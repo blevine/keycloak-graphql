@@ -7,6 +7,7 @@ import net.brianlevine.keycloak.graphql.util.Page;
 import net.brianlevine.keycloak.graphql.util.PagedMap;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
+import org.keycloak.representations.idm.MemberRepresentation;
 import org.keycloak.representations.idm.OrganizationDomainRepresentation;
 import org.keycloak.representations.idm.OrganizationRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -98,7 +99,7 @@ public class OrganizationType {
 //    }
 
     public Page<UserType> getMembers(PagingOptions options) {
-        List<UserRepresentation> members =  delegate.getMembers();
+        List<MemberRepresentation> members =  delegate.getMembers();
 
         options = options == null ? new PagingOptions() : options;
 

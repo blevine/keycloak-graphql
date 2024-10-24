@@ -15,6 +15,8 @@
     </modules>
 
 	<properties>
+		<keycloak.version>26.0.1</keycloak.version>
+
 		<spqr.version>0.12.3</spqr.version>
 		<auto-service.version>1.1.1</auto-service.version>
 		<commons-codec.version>1.16.1</commons-codec.version>
@@ -30,7 +32,6 @@
 		<slf4j.version>2.0.6</slf4j.version>
 		<aws.version>2.17.209</aws.version>
 		<bytebuddy.version>1.14.11</bytebuddy.version>
-		<keycloak.version>25.0.2</keycloak.version>
 		<maven.compiler.version>3.13.0</maven.compiler.version>
 		<maven.compiler.release>17</maven.compiler.release>
 		<maven-shade.version>3.6.0</maven-shade.version>
@@ -77,6 +78,12 @@
 				<artifactId>keycloak-services</artifactId>
 				<version>${keycloak.version}</version>
 				<scope>provided</scope>
+				<exclusions>
+				<exclusion>
+					<groupId>org.jboss.slf4j</groupId>
+					<artifactId>slf4j-jboss-logmanager</artifactId>
+				</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>com.google.auto.service</groupId>

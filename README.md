@@ -1,6 +1,6 @@
 ![CI Build](https://github.com/blevine/keycloak-graphql/actions/workflows/maven.yml/badge.svg?cache-control=no-cache)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![](https://img.shields.io/badge/Keycloak-25.0.2-blue)
+![](https://img.shields.io/badge/Keycloak-26.0.1-blue)
 # Keycloak GraphQL API
 A Keycloak extension that implements the [Keycloak Admin REST API](https://www.keycloak.org/docs-api/25.0.2/rest-api/index.html) in GraphQL.
 
@@ -30,7 +30,7 @@ I am not accepting pull requests at this time. Please feel free to post question
 
 ## Current state of the code
 
-- Currently built against Keycloak 25.0.2 although I will probably increment this as I go. Eventually, there will 
+- Currently built against Keycloak 26.0.1 although I will probably increment this as I go. Eventually, there will 
 be tagged releases to support some number of recent Keycloak versions.
 - Initially I'm concentrating on the following types: Realm, Client, User, Group, Role and getting the queries
 on those types right without regard to performance improvements.
@@ -42,8 +42,7 @@ based on role-based access control so this seems the safest route for now. Graph
 to those classes and sometimes to the related *Model classes in the
 org.keycloak.models package. For certain optimizations, I'll probably break away from using these classes and write 
 my own SQL queries. This will be done on a case-by-case basis.
-- GraphQL variables are not yet supported.
-- Built and tested against Keycloak 25.0.2. Once we do actual releases, a compatibility table will be provided.
+- Built and tested against Keycloak 26.0.1. Once we do actual releases, a compatibility table will be provided.
 
 ## Access control, existence, and errors
 Keycloak imposes role-based access controls on its resources. When a GraphQL query returns a collection, any items in that collection
