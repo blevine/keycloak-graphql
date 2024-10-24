@@ -2,7 +2,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![](https://img.shields.io/badge/Keycloak-26.0.1-blue)
 # Keycloak GraphQL API
-A Keycloak extension that implements the [Keycloak Admin REST API](https://www.keycloak.org/docs-api/25.0.2/rest-api/index.html) in GraphQL.
+A Keycloak extension that supports the functionality of the [Keycloak Admin REST API](https://www.keycloak.org/docs-api/25.0.2/rest-api/index.html) in GraphQL.
 
 ## WARNING: This project is in its formative stages, please do not use in production!
 
