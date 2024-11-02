@@ -38,11 +38,30 @@
 		<maven-surefire.version>3.2.5</maven-surefire.version>
 		<version.shrinkwrap.resolvers>3.3.1</version.shrinkwrap.resolvers>
 		<json-simple.version>1.1.1</json-simple.version>
-<!--		<commons.text.version>1.12.0</commons.text.version>-->
+		<vertx.version>4.5.10</vertx.version>
+
 	</properties>
 
 	<dependencyManagement>
 		<dependencies>
+			<!-- Vert.X -->
+			<!-- TODO: TEMP client dependency!! -->
+			<dependency>
+				<groupId>io.vertx</groupId>
+				<artifactId>vertx-web-client</artifactId>
+				<version>${vertx.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.vertx</groupId>
+				<artifactId>vertx-rx-java3</artifactId>
+				<version>4.1.8</version>
+			</dependency>
+			<dependency>
+				<groupId>io.vertx</groupId>
+				<artifactId>vertx-web-graphql</artifactId>
+				<version>${vertx.version}</version>
+			</dependency>
+
 			<!--SPQR-->
 			<dependency>
 				<groupId>io.leangen.graphql</groupId>
@@ -182,6 +201,10 @@
 								<exclude>org.checkerframework*</exclude>
 								<exclude>junit*</exclude>
 								<exclude>org.hamcrest*</exclude>
+								<exclude>io.vertx:vertx-core</exclude>
+								<exclude>io.vertx:vertx-codegen</exclude>
+								<exclude>io.vertx:vertx-web</exclude>
+								<exclude>io.vertx:vertx-web-client</exclude>
 							</excludes>
 						</artifactSet>
 						<filters>

@@ -3,7 +3,7 @@ services:
   keycloak:
     container_name: keycloak-graphql
     image: quay.io/keycloak/keycloak:26.0.1
-    command: start-dev
+    command: "start-dev --verbose"
     environment:
       DEBUG: 'true'
       DEBUG_PORT: '*:8787'
@@ -12,6 +12,7 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
       - '8080:8080'
+      - '8081:8081'
       - '8787:8787'
     volumes:
       - ./kc_data:/opt/keycloak/data
