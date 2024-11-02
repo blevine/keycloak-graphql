@@ -19,9 +19,9 @@ import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.services.resources.admin.AdminAuth;
 import org.keycloak.services.resources.admin.permissions.AdminPermissions;
 
-
 import java.util.List;
 import java.util.Objects;
+
 
 public class RealmQuery {
 

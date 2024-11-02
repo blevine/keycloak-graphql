@@ -27,7 +27,7 @@ public class KeycloakGraphQLDataFetcherExceptionHandler extends SimpleDataFetche
         return DataFetcherExceptionHandlerResult.newResult().error(error).build();
     }
 
-    @Override
+
     protected void logException(ExceptionWhileDataFetching error, Throwable exception) {
         LOGGER.error(error.getMessage(), exception);
     }

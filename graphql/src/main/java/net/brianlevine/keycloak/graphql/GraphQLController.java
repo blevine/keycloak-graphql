@@ -7,12 +7,15 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.SchemaPrinter;
 import io.leangen.graphql.GraphQLRuntime;
 import io.leangen.graphql.GraphQLSchemaGenerator;
+import io.vertx.core.Vertx;
 import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.HttpHeaders;
 import net.brianlevine.keycloak.graphql.queries.ErrorQuery;
 import net.brianlevine.keycloak.graphql.queries.RealmQuery;
 import net.brianlevine.keycloak.graphql.queries.UserQuery;
+import net.brianlevine.keycloak.graphql.subscriptions.EventsSubscription;
 import net.brianlevine.keycloak.graphql.util.OverrideTypeInfoGenerator;
+import org.keycloak.events.Event;
 import org.keycloak.models.KeycloakSession;
 
 import java.util.HashMap;
@@ -20,22 +23,31 @@ import java.util.Map;
 
 public class GraphQLController {
 
-    private GraphQL graphQL;
+    private static GraphQL graphQL;
 
     public GraphQLController() {
     }
 
-    private GraphQL getSchema() {
+    public static GraphQL getSchema() {
+        return getSchema(false);
+    }
+
+    public static GraphQL getSchema(boolean reset) {
+
+        if (reset) {
+            graphQL = null;
+        }
 
         if (graphQL == null) {
             RealmQuery realmQuery = new RealmQuery();
             ErrorQuery errorQuery = new ErrorQuery();
             UserQuery userQuery = new UserQuery();
+            EventsSubscription testSubscription = new EventsSubscription();
 
             //Schema generated from query classes
             GraphQLSchema schema = new GraphQLSchemaGenerator()
-                    .withBasePackages("net.brianlevine.keycloak.graphql")
-                    .withOperationsFromSingletons(realmQuery, errorQuery, userQuery)
+                    .withBasePackages("net.brianlevine.keycloak.graphql", "org.keycloak.events", "org.keycloak.events.admin")
+                    .withOperationsFromSingletons(realmQuery, errorQuery, userQuery, testSubscription)
                     .withRelayConnectionCheckRelaxed()
                     .withTypeInfoGenerator(new OverrideTypeInfoGenerator().withHierarchicalNames(false))
                     .generate();
@@ -51,11 +63,20 @@ public class GraphQLController {
         return graphQL;
     }
 
-    public Map<String, Object> executeQuery(String query, String operationName, KeycloakSession session, Request request, HttpHeaders headers, Map<String, Object> variables) {
+    public Map<String, Object> executeQuery(
+            String query,
+            String operationName,
+            KeycloakSession session,
+            Request request,
+            HttpHeaders headers,
+            Vertx vertx,
+            Map<String, Object> variables) {
+
         Map<String, Object> ctx = new HashMap<>();
         ctx.put("keycloak.session", session);
         ctx.put("request", request);
         ctx.put("headers", headers);
+        ctx.put("vertx", vertx);
 
         ExecutionResult executionResult = getSchema().execute(ExecutionInput.newExecutionInput()
                 .query(query)
