@@ -1,6 +1,6 @@
 ![CI Build](https://github.com/blevine/keycloak-graphql/actions/workflows/maven.yml/badge.svg?cache-control=no-cache)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![](https://img.shields.io/badge/Keycloak-26.0.1-blue)
+![](https://img.shields.io/badge/Keycloak-26.0.2-blue)
 # Keycloak GraphQL API
 A Keycloak extension that supports the functionality of the [Keycloak Admin REST API](https://www.keycloak.org/docs-api/25.0.2/rest-api/index.html) in GraphQL.
 
@@ -30,11 +30,13 @@ I am not accepting pull requests at this time. Please feel free to post question
 
 ## Current state of the code
 
-- Currently built against Keycloak 26.0.1 although I will probably increment this as I go. Eventually, there will 
+- Currently built against Keycloak 26.0.2 although I will probably increment this as I go. Eventually, there will 
 be tagged releases to support some number of recent Keycloak versions.
 - Initially I'm concentrating on the following types: Realm, Client, User, Group, Role and getting the queries
 on those types right without regard to performance improvements.
-- Only read operations (GraphQL queries) are supported. Mutations and subscriptions are not supported right now.
+- Only read operations (GraphQL queries) are supported. Mutations are not yet supported.
+- A sample Subscription service is included that allows the caller to register for Keycloak Events
+and Admin Events. See below for implementation details.
 - The GraphQL types rely heavily on some of the existing REST code, most notably the *Resource 
 classes in the org.keycloak.admin.client.resource package and the *Representation classes in the 
 org.keycloak.representations.idm package. The *Resource classes include filtering
@@ -58,6 +60,25 @@ NoSuchUser error).
 ## Map fields
 Certain fields (especially in Realm), return Maps of varying complexity. These will most likely be wrapped in specific
 GraphQL types at some point.
+
+## Support for subscriptions
+Two GraphQL subscriptions are implemented: events and adminEvents. The back-end sits on top of a Keycloak EventListenerProvider
+that hooks Keycloak events and admin events. Since Keycloak already includes some Vert.x support, I decided to use
+Vert.x's reactive programming support (vertx-rx-java3) and GraphQL support (vertex-web-graphql) which also includes support
+for Websockets. The class SubscriptionServer is a Vert.x Verticle that starts an HTTP server on port 8081 (soon
+to be configurable) that supports Websockets and GraphQL subscriptions using the Apollo graphql-ws protocol.
+
+I'm not convinced that this is the best way to go about this. I would have preferred to support Websockets on the same
+Keycloak HTTP(S) port on which we support standard GraphQL traffic. However, I couldn't figure out how to integrate
+a Websocket server. Any advice in that area would be appreciated. I suspect that one or more Quarkus extensions would
+be helpful here, but I was not successful in integrating Quarkus extensions into my Keycloak extension.
+
+### Enabling the event subscriptions
+To activate the event listener to support the event and adminEvent subscriptions, some Keycloak configuration is required:
+1. Log in to the Keycloak Admin console
+2. Navigate to Realm Settings
+3. Click on the Events tab
+4. In the Event Listeners field, add `multicast-event-listener`. 
 
 ## Building the extension JAR file
 Run `mvn clean package`. The resulting JAR file will be located in ./graphql/target/net.brianlevine.keycloak-graphql.jar.
