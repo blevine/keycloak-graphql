@@ -3,6 +3,7 @@ package net.brianlevine.keycloak.graphql;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
+import graphql.execution.DataFetcherExceptionHandler;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.SchemaPrinter;
 import io.leangen.graphql.GraphQLRuntime;
@@ -52,9 +53,11 @@ public class GraphQLController {
                     .withTypeInfoGenerator(new OverrideTypeInfoGenerator().withHierarchicalNames(false))
                     .generate();
 
+            DataFetcherExceptionHandler exceptionHandler = new KeycloakGraphQLDataFetcherExceptionHandler();
             graphQL = GraphQLRuntime
                     .newGraphQL(schema)
-                    .defaultDataFetcherExceptionHandler(new KeycloakGraphQLDataFetcherExceptionHandler())
+                    .defaultDataFetcherExceptionHandler(exceptionHandler)
+                    .subscriptionExecutionStrategy(new KeycloakSubscriptionExecutionStrategy(exceptionHandler))
                     .build();
 
         }

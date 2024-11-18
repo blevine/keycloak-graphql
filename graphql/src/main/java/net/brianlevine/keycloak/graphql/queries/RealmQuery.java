@@ -29,8 +29,7 @@ public class RealmQuery {
     public Page<RealmType> getRealms(PagingOptions options, @GraphQLRootContext GraphQLContext ctx) {
 
         KeycloakSession session = ctx.get("keycloak.session");
-        HttpHeaders headers = ctx.get("headers");
-        AdminAuth auth = Auth.authenticateRealmAdminRequest(session, headers);
+        AdminAuth auth = Auth.authenticateRealmAdminRequest(session, ctx);
         Page<RealmType> ret;
 
         try {
@@ -59,8 +58,7 @@ public class RealmQuery {
     public RealmType getRealmById(@GraphQLArgument String id, @GraphQLRootContext GraphQLContext ctx) {
         KeycloakSession session = ctx.get("keycloak.session");
         RealmModel realm = session.realms().getRealm(id);
-        HttpHeaders headers = ctx.get("headers");
-        AdminAuth auth = Auth.authenticateRealmAdminRequest(session, headers);
+        AdminAuth auth = Auth.authenticateRealmAdminRequest(session, ctx);
 
         return toRealmType(session, realm, auth);
     }
@@ -69,8 +67,7 @@ public class RealmQuery {
     public RealmType getRealmByName(@GraphQLArgument String name, @GraphQLRootContext GraphQLContext ctx) {
         KeycloakSession session = ctx.get("keycloak.session");
         RealmModel realm = session.realms().getRealmByName(name);
-        HttpHeaders headers = ctx.get("headers");
-        AdminAuth auth = Auth.authenticateRealmAdminRequest(session, headers);
+        AdminAuth auth = Auth.authenticateRealmAdminRequest(session, ctx);
         return toRealmType(session, realm, auth);
     }
 
@@ -80,8 +77,7 @@ public class RealmQuery {
     public RealmType getRealm( @GraphQLRootContext GraphQLContext ctx) {
         KeycloakSession session = ctx.get("keycloak.session");
         RealmModel realm = session.getContext().getRealm();
-        HttpHeaders headers = ctx.get("headers");
-        AdminAuth auth = Auth.authenticateRealmAdminRequest(session, headers);
+        AdminAuth auth = Auth.authenticateRealmAdminRequest(session, ctx);
 
         return toRealmType(session, realm, auth);
     }

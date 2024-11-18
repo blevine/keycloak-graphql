@@ -16,6 +16,10 @@ public class KeycloakGraphQLError extends ExceptionWhileDataFetching {
 
     public KeycloakGraphQLError(ResultPath path, Throwable exception, SourceLocation sourceLocation, Map<String, Object> additionalExtensions) {
         super(path, exception, sourceLocation);
+        setAdditionalExtensions(additionalExtensions);
+    }
+
+    public void setAdditionalExtensions(Map<String, Object> additionalExtensions) {
         this.additionalExtensions = additionalExtensions;
     }
 

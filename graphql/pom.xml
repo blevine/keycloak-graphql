@@ -22,6 +22,13 @@
 		</dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
+			<artifactId>vertx-auth-oauth2</artifactId>
+		</dependency>
+
+
+
+		<dependency>
+			<groupId>io.vertx</groupId>
 			<artifactId>vertx-rx-java3</artifactId>
 		</dependency>
 		<dependency>
@@ -53,6 +60,14 @@
 		<dependency>
 			<groupId>org.keycloak</groupId>
 			<artifactId>keycloak-services</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.keycloak</groupId>
+			<artifactId>keycloak-quarkus-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.keycloak</groupId>
+			<artifactId>keycloak-adapter-core</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.google.auto.service</groupId>

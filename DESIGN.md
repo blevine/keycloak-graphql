@@ -13,15 +13,15 @@ as its Publisher which publishes `KeycloakEventTypes`. Subscriptions need to ret
 ### Problems with Subscriptions
 - As mentioned above, **I'd like to find a better way to integrate WebSockets into the Keycloak server** without requiring
 a separate server on a different port.
-  - **How to get "context" information to various resolvers**. If you look at KeycloakEventType, you'll see certain
-  fields implemented as "subqueries." For example, the realm field is implemented like so:
+- **How to get "context" information to various resolvers**. If you look at KeycloakEventType, you'll see certain
+fields implemented as "subqueries." For example, the realm field is implemented like so:
 
-        @GraphQLQuery
-        public RealmType getRealm(@GraphQLEnvironment ResolutionEnvironment env) {
-            GraphQLContext ctx = env.dataFetchingEnvironment.getGraphQlContext();
-            String realmId = event != null ? event.getRealmId() : adminEvent.getRealmId();
-            return new RealmQuery().getRealmById(realmId, ctx);
-        }
+      @GraphQLQuery
+      public RealmType getRealm(@GraphQLEnvironment ResolutionEnvironment env) {
+          GraphQLContext ctx = env.dataFetchingEnvironment.getGraphQlContext();
+          String realmId = event != null ? event.getRealmId() : adminEvent.getRealmId();
+          return new RealmQuery().getRealmById(realmId, ctx);
+      }
 
 You can see that a GraphQL context is passed to the getRealmById() method. These query methods expect the
 context to be populated with a KeycloakSession and HTTP headers. The headers need to include the Authorization
@@ -29,12 +29,31 @@ header with the OIDC access token as its value. If the caller includes the "real
 the getRealm() method will be called each time the event fires. So this invocation is actually coming from the server-
 side as opposed to an HTTP request which would be the case if this method were called as the result of a query
 coming from a client of the API. The getRealmByID() method needs the KeycloakSession and access_token in order
-to perform access control on the RealmType and its fields.
+to perform access control on the RealmType and its fields. To deal with some of this, I created a custom
+SubscriptionExecutionStrategy (KeycloakSubscriptionExecutionStrategy) which creates a new KeycloakSession prior
+to executing the subscription like so:
 
-So the question is: where would I create the KeycloakSession and retrieve the access token? And then, how would I would
-I add it to the context that's passed in the ResolutionEnvironment? Remember that once the caller has created the
-Subscription, there's no more communication from the caller. The caller gets called back each time an event for that
-subscription fires. So, the KeycloakSession and access token need to be obtained and added to the GraphQL context
-each time the event is fired.  I haven't figured out how to do that yet. Maybe it needs to be part of some sort of
-pipeline that comes after the MulticastProcessor but before the event is published to the subscriber?  I'm not
-familiar enough with the Reactive Java libraries at this point...
+    Function<Object, CompletionStage<ExecutionResult>> mapperFunction = (eventPayload) -> {
+                System.out.println("BEFORE executeSubscriptionEvent");
+
+                KeycloakSession kcSession = new KeycloakBeanProducer().getKeycloakSession();
+                kcSession.getTransactionManager().begin();
+
+                GraphQLContext ctx = executionContext.getGraphQLContext();
+                ctx.put("keycloak.session", kcSession);
+
+                // Resolvers can use this to determine that the execution is happening as a result of a
+                // subscription event.
+                ctx.put("isSubscription", true);
+
+                CompletableFuture<ExecutionResult> f =  executeSubscriptionEvent(executionContext, parameters, eventPayload);
+                return f.thenApply((a) -> {
+                    System.out.println("After executeSubscriptionEvent");
+                    kcSession.close();
+                    return a;
+                });
+            };
+
+This was somewhat successful although I'm seeing warnings that the transaction was completed in multiple threads. This
+is probably due to the fact that I don't completely understand Vert.x async Java programming all that well.
+

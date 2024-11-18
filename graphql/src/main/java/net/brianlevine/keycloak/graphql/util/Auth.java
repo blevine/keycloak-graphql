@@ -23,7 +23,8 @@ public class Auth {
     public static AdminAuth authenticateRealmAdminRequest(KeycloakSession session, GraphQLContext ctx) {
         return authenticateRealmAdminRequest(session, (HttpHeaders)ctx.get("headers"));
     }
-    public static AdminAuth authenticateRealmAdminRequest(KeycloakSession session, HttpHeaders headers) {
+
+    private static AdminAuth authenticateRealmAdminRequest(KeycloakSession session, HttpHeaders headers) {
         String tokenString = AppAuthManager.extractAuthorizationHeaderToken(headers);
         if (tokenString == null) throw new NotAuthorizedException("Bearer");
         AccessToken token;
@@ -43,7 +44,7 @@ public class Auth {
 
         AuthenticationManager.AuthResult authResult = new AppAuthManager.BearerTokenAuthenticator(session)
                 .setRealm(realm)
-                .setConnection(session.getContext().getConnection())
+                //BJL.setConnection(session.getContext().getConnection())
                 .setHeaders(headers)
                 .authenticate();
 

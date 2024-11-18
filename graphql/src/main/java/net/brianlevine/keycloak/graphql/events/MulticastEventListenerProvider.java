@@ -1,10 +1,13 @@
 package net.brianlevine.keycloak.graphql.events;
 
 import io.reactivex.rxjava3.processors.MulticastProcessor;
+import net.brianlevine.keycloak.graphql.types.KeycloakEventType;
 import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.admin.AdminEvent;
+
+
 
 /**
  * An EventListenerProvider that sends Keycloak Events and AdminEvents to
@@ -16,12 +19,13 @@ public class MulticastEventListenerProvider
 
     private static final Logger LOGGER = Logger.getLogger(MulticastEventListenerProvider.class);
 
-    private final MulticastProcessor<Event> eventMulticastProcessor;
-    private final MulticastProcessor<AdminEvent> adminEventMulticastProcessor;
+    private final MulticastProcessor<KeycloakEventType> eventMulticastProcessor;
+    private final MulticastEventListenerProviderFactory fac;
 
-    public MulticastEventListenerProvider(MulticastProcessor<Event> eventMulticastProcessor, MulticastProcessor<AdminEvent> adminEventMulticastProcessor) {
+
+    public MulticastEventListenerProvider(MulticastProcessor<KeycloakEventType> eventMulticastProcessor, MulticastEventListenerProviderFactory fac) {
         this.eventMulticastProcessor = eventMulticastProcessor;
-        this.adminEventMulticastProcessor = adminEventMulticastProcessor;
+        this.fac = fac;
     }
 
     @Override
@@ -37,7 +41,7 @@ public class MulticastEventListenerProvider
 
     private void sendEvent(Event e) {
         if (eventMulticastProcessor.hasSubscribers()) {
-            boolean res = eventMulticastProcessor.offer(e);
+            boolean res = eventMulticastProcessor.offer(new KeycloakEventType(e));
 
             if (!res) {
                 LOGGER.warn("multicastProcessor.offer() returned false");
@@ -46,8 +50,8 @@ public class MulticastEventListenerProvider
     }
 
     private void sendEvent(AdminEvent e) {
-        if (adminEventMulticastProcessor.hasSubscribers()) {
-            boolean res = adminEventMulticastProcessor.offer(e);
+        if (eventMulticastProcessor.hasSubscribers()) {
+            boolean res = eventMulticastProcessor.offer(new KeycloakEventType(e));
 
             if (!res) {
                 LOGGER.warn("multicastProcessor.offer() returned false");
