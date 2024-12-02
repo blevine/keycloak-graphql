@@ -18,6 +18,7 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 
 import java.io.File;
@@ -48,8 +49,19 @@ public abstract class KeycloakGraphQLTest {
     public static void beforeAll() {
         if (keycloak == null) {
             final List<File> libs = Maven.resolver()
-                    .resolve("io.leangen.graphql:spqr:0.12.3")
-                    .withTransitivity().asList(File.class);
+                    .loadPomFromFile("./pom.xml")
+                    .importCompileAndRuntimeDependencies()
+                    .resolve()
+                    .withTransitivity()
+                    .asList(File.class);
+//                    .resolve(
+//                            "io.leangen.graphql:spqr:0.12.3",
+//                            "org.glassfish.tyrus:tyrus-server:2.1.5",
+//                            "org.glassfish.tyrus:tyrus-container-grizzly-server:2.1.5",
+//                            "io.projectreactor:reactor-core:3.6.8",
+//                            "org.slf4j:slf4j-reload4j:2.0.6"
+//                            )
+//                    .withTransitivity().asList(File.class);
 
             String debugPort = System.getenv().get("DEBUG_PORT");
             if (debugPort != null) {

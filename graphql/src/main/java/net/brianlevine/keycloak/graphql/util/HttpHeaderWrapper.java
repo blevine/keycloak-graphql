@@ -31,9 +31,21 @@ public class HttpHeaderWrapper  implements HttpHeaders {
         this.cookies = new HashMap<>();
     }
 
+    public HttpHeaderWrapper(MultivaluedMap<String, String> headers) {
+        this.headers = null;
+        this.jheaders = headers;
+        this.cookies = new HashMap<>();;
+    }
+
+    public HttpHeaderWrapper(MultivaluedMap<String, String> headers, Map<String, Cookie> cookies) {
+        this.headers = null;
+        this.jheaders = headers;
+        this.cookies = cookies;
+    }
+
     @Override
     public List<String> getRequestHeader(String name) {
-        return headers.getAll(name);
+        return getRequestHeaders().get(name);
     }
 
     @Override

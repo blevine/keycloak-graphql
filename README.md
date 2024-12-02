@@ -63,23 +63,25 @@ GraphQL types at some point.
 
 ## Support for subscriptions
 A not-so-robust subscriptions implementation is included for Keycloak events and adminEvents. The back-end 
-sits on top of a Keycloak EventListenerProvider
-that hooks Keycloak events and admin events. Since Keycloak already includes some Vert.x support, I decided to use
-Vert.x's reactive programming support (vertx-rx-java3) and GraphQL support (vertex-web-graphql) which also includes support
-for Websockets. The class SubscriptionServer is a Vert.x Verticle that starts an HTTP server on port 8081 (soon
-to be configurable) that supports Websockets and GraphQL subscriptions using the Apollo graphql-ws protocol.
+sits on top of a Keycloak EventListenerProvider that hooks Keycloak events and admin events. The server is based
+on [Java API for WebSockets](https://projects.eclipse.org/projects/ee4j.websocket) using the 
+[Eclipse Tyrus](https://github.com/eclipse-ee4j/tyrus) reference implementation. A protocol handler is included
+that implements the [Apollo graphql-transport-ws sub-protocol](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md) 
+(although this particular implementation is not 100% compliant)
 
-I'm not convinced that this is the best way to go about this. I would have preferred to support Websockets on the same
+This is obviously suboptimal. I would have preferred to support Websockets on the same
 Keycloak HTTP(S) port on which we support standard GraphQL traffic. However, I couldn't figure out how to integrate
-a Websocket server. Any advice in that area would be appreciated. I suspect that one or more Quarkus extensions would
-be helpful here, but I was not successful in integrating Quarkus extensions into my Keycloak extension.
+a Websocket server. _Any advice in that area would be appreciated_. I suspect that one or more Quarkus extensions would
+be helpful here, but I was not successful in integrating Quarkus extensions into my Keycloak extension. In fact, it
+looks like enhancing Keycloak with Quarkus extensions is not currently supported.
 
 ### Authentication and subscriptions
-A sample client (SubsscriptionClient) that demonstrates one way to do subscriptions on the client side. The client
-first authenticates with Keycloak to obtain and access token which is then passed in the Authorization header. I've
-taken the simple approach of making the client responsible for refreshing the access token when it expires and then
+A sample client is included in the graphql-ws-client module which is based on the 
+[graphql-ws client](https://github.com/enisdenjo/graphql-ws).
+
+I've taken the simple approach of making the client responsible for refreshing the access token when it expires and then
 re-issuing the subscription. This is as opposed to having the server side determine whether the access token is
-expired when the subscription event is fired and then refreshing it. I'm looking for feedback on this approach.
+expired when the subscription event is fired and then refreshing it. _I'm looking for feedback on this approach_.
 
 ### Enabling the event subscriptions
 To activate the event listener to support the event and adminEvent subscriptions, some Keycloak configuration is required:

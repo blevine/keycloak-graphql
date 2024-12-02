@@ -3,7 +3,6 @@ package net.brianlevine.keycloak.graphql.rest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import io.vertx.core.Vertx;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 
@@ -29,13 +28,10 @@ public class GraphQLResourceProvider implements RealmResourceProvider {
 
 	private final KeycloakSession session;
 	private final GraphQLController graphql;
-	private final Vertx vertx;
 
-	public GraphQLResourceProvider(KeycloakSession session, GraphQLController graphql, Vertx vertx) {
+	public GraphQLResourceProvider(KeycloakSession session, GraphQLController graphql) {
 		this.session = session;
 		this.graphql = graphql;
-		this.vertx = vertx;
-
 		LOGGER.debug("Created GraphQLResourceProvider");
 	}
 
@@ -59,13 +55,13 @@ public class GraphQLResourceProvider implements RealmResourceProvider {
 		Object variables = body.get("variables");
 
 		@SuppressWarnings("unchecked")
-		Map<String, Object> result = graphql.executeQuery(
+		Map<String, Object> result = graphql.executeQueryToSpec(
 				query,
 				operationName,
 				session,
+				null,
 				request,
 				headers,
-				vertx,
 				variables != null ? (Map<String, Object>) variables : Collections.emptyMap());
 
 		ObjectMapper mapper = new ObjectMapper();

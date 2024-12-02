@@ -14,27 +14,43 @@
 	<version>1.0-SNAPSHOT</version>
 
 	<dependencies>
-		<!-- Vert.X -->
-		<!-- TODO: TEMP client dependency!! -->
-		<dependency>
-			<groupId>io.vertx</groupId>
-			<artifactId>vertx-web-client</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.vertx</groupId>
-			<artifactId>vertx-auth-oauth2</artifactId>
-		</dependency>
-
-
 
 		<dependency>
-			<groupId>io.vertx</groupId>
-			<artifactId>vertx-rx-java3</artifactId>
+			<groupId>io.leangen.graphql</groupId>
+			<artifactId>graphql-spqr-spring-boot-starter</artifactId>
+			<version>1.0.1</version>
 		</dependency>
+
+		<!-- Alternate WebSocket server (Tyrus) -->
 		<dependency>
-			<groupId>io.vertx</groupId>
-			<artifactId>vertx-web-graphql</artifactId>
+			<groupId>jakarta.websocket</groupId>
+			<artifactId>jakarta.websocket-api</artifactId>
+			<version>2.1.1</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.glassfish.tyrus</groupId>
+			<artifactId>tyrus-server</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.glassfish.tyrus</groupId>
+			<artifactId>tyrus-container-grizzly-server</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+		</dependency>
+
+		<!-- TODO: Remove this dependency once we factor out spring dependencies in TyrusServer -->
+		<!--
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-websocket</artifactId>
+		</dependency>
+		-->
+
 		<!--SPQR-->
 		<dependency>
 			<groupId>io.leangen.graphql</groupId>
@@ -65,10 +81,7 @@
 			<groupId>org.keycloak</groupId>
 			<artifactId>keycloak-quarkus-server</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.keycloak</groupId>
-			<artifactId>keycloak-adapter-core</artifactId>
-		</dependency>
+
 		<dependency>
 			<groupId>com.google.auto.service</groupId>
 			<artifactId>auto-service</artifactId>
@@ -95,26 +108,21 @@
 			<artifactId>rest-assured</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.googlecode.json-simple</groupId>
-			<artifactId>json-simple</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-reload4j</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>com.googlecode.json-simple</groupId>
+			<artifactId>json-simple</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.jboss.shrinkwrap.resolver</groupId>
 			<artifactId>shrinkwrap-resolver-depchain</artifactId>
 			<type>pom</type>
 		</dependency>
-
-<!--		<dependency>-->
-<!--			<groupId>org.apache.commons</groupId>-->
-<!--			<artifactId>commons-text</artifactId>-->
-<!--		</dependency>-->
 	</dependencies>
-
-
 
 	<build>
 		<plugins>

@@ -31,43 +31,39 @@
 		<testcontainers-keycloak.version>3.4.0</testcontainers-keycloak.version>
 		<slf4j.version>2.0.6</slf4j.version>
 		<aws.version>2.17.209</aws.version>
-		<bytebuddy.version>1.14.11</bytebuddy.version>
 		<maven.compiler.version>3.13.0</maven.compiler.version>
 		<maven.compiler.release>17</maven.compiler.release>
 		<maven-shade.version>3.6.0</maven-shade.version>
 		<maven-surefire.version>3.2.5</maven-surefire.version>
-		<version.shrinkwrap.resolvers>3.3.1</version.shrinkwrap.resolvers>
 		<json-simple.version>1.1.1</json-simple.version>
-		<vertx.version>4.5.10</vertx.version>
+		<shrinkwrap.resolvers.version>3.3.2</shrinkwrap.resolvers.version>
 
 	</properties>
 
 	<dependencyManagement>
 		<dependencies>
-			<!-- Vert.X -->
-
-			<!-- TODO: TEMP client dependency!! -->
 			<dependency>
-				<groupId>io.vertx</groupId>
-				<artifactId>vertx-web-client</artifactId>
-				<version>${vertx.version}</version>
+				<groupId>jakarta.websocket</groupId>
+				<artifactId>jakarta.websocket-api</artifactId>
+				<version>2.1.1</version>
 			</dependency>
-			<dependency>
-				<groupId>io.vertx</groupId>
-				<artifactId>vertx-auth-oauth2</artifactId>
-				<version>${vertx.version}</version>
-			</dependency>
-			<!-- TODO -->
 
 			<dependency>
-				<groupId>io.vertx</groupId>
-				<artifactId>vertx-rx-java3</artifactId>
-				<version>4.1.8</version>
+				<groupId>org.glassfish.tyrus</groupId>
+				<artifactId>tyrus-server</artifactId>
+				<version>2.1.5</version>
 			</dependency>
+
 			<dependency>
-				<groupId>io.vertx</groupId>
-				<artifactId>vertx-web-graphql</artifactId>
-				<version>${vertx.version}</version>
+				<groupId>org.glassfish.tyrus</groupId>
+				<artifactId>tyrus-container-grizzly-server</artifactId>
+				<version>2.1.5</version>
+			</dependency>
+
+			<dependency>
+				<groupId>io.projectreactor</groupId>
+				<artifactId>reactor-core</artifactId>
+				<version>3.6.8</version>
 			</dependency>
 
 			<!--SPQR-->
@@ -120,23 +116,26 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.keycloak</groupId>
-				<artifactId>keycloak-adapter-core</artifactId>
-				<version>25.0.3</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
 				<groupId>com.google.auto.service</groupId>
 				<artifactId>auto-service</artifactId>
 				<version>${auto-service.version}</version>
 				<scope>provided</scope>
 				<optional>true</optional>
 			</dependency>
+
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-api</artifactId>
 				<version>${slf4j.version}</version>
 				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.jboss.shrinkwrap.resolver</groupId>
+				<artifactId>shrinkwrap-resolver-depchain</artifactId>
+				<version>${shrinkwrap.resolvers.version}</version>
+				<type>pom</type>
+				<scope>test</scope>
 			</dependency>
 			<dependency>
 				<groupId>org.slf4j</groupId>
@@ -178,20 +177,8 @@
 				<groupId>com.googlecode.json-simple</groupId>
 				<artifactId>json-simple</artifactId>
 				<version>${json-simple.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.jboss.shrinkwrap.resolver</groupId>
-				<artifactId>shrinkwrap-resolver-depchain</artifactId>
-				<version>${version.shrinkwrap.resolvers}</version>
 				<scope>test</scope>
-				<type>pom</type>
 			</dependency>
-<!--			<dependency>-->
-<!--				<groupId>org.apache.commons</groupId>-->
-<!--				<artifactId>commons-text</artifactId>-->
-<!--				<version>${commons.text.version}</version>-->
-<!--			</dependency>-->
-
 		</dependencies>
 	</dependencyManagement>
 
@@ -233,10 +220,13 @@
 								<artifact>*:*</artifact>
 								<excludes>
 									<exclude>module-info.class</exclude>
-									<exclude>META-INF/LICENSE</exclude>
-									<exclude>META-INF/NOTICE</exclude>
+									<exclude>META-INF/LICENSE*</exclude>
+									<exclude>META-INF/NOTICE*</exclude>
+									<exclude>META-INF/license*</exclude>
+									<exclude>META-INF/notice*</exclude>
 									<exclude>META-INF/MANIFEST.MF</exclude>
 									<exclude>META-INF/versions/**</exclude>
+									<exclude>META-INF/spring/aot.factories</exclude>
 								</excludes>
 							</filter>
 						</filters>

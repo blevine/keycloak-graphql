@@ -8,7 +8,6 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.SchemaPrinter;
 import io.leangen.graphql.GraphQLRuntime;
 import io.leangen.graphql.GraphQLSchemaGenerator;
-import io.vertx.core.Vertx;
 import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.HttpHeaders;
 import net.brianlevine.keycloak.graphql.queries.ErrorQuery;
@@ -16,7 +15,6 @@ import net.brianlevine.keycloak.graphql.queries.RealmQuery;
 import net.brianlevine.keycloak.graphql.queries.UserQuery;
 import net.brianlevine.keycloak.graphql.subscriptions.EventsSubscription;
 import net.brianlevine.keycloak.graphql.util.OverrideTypeInfoGenerator;
-import org.keycloak.events.Event;
 import org.keycloak.models.KeycloakSession;
 
 import java.util.HashMap;
@@ -66,28 +64,54 @@ public class GraphQLController {
         return graphQL;
     }
 
-    public Map<String, Object> executeQuery(
+    public Map<String, Object> executeQueryToSpec(
             String query,
             String operationName,
             KeycloakSession session,
+            String accessToken,
             Request request,
             HttpHeaders headers,
-            Vertx vertx,
+            Map<String, Object> variables) {
+
+        return executeQuery(query, operationName, session, accessToken, request, headers, variables).toSpecification();
+    }
+
+    public ExecutionResult executeQuery(
+            String query,
+            String operationName,
+            KeycloakSession session,
+            String accessToken,
+            Request request,
+            HttpHeaders headers,
             Map<String, Object> variables) {
 
         Map<String, Object> ctx = new HashMap<>();
-        ctx.put("keycloak.session", session);
-        ctx.put("request", request);
-        ctx.put("headers", headers);
-        ctx.put("vertx", vertx);
+
+        Map<String, Object> v =  variables == null ? new HashMap<>(): variables;
+
+        if (session != null) {
+            ctx.put("keycloak.session", session);
+        }
+
+        if (request != null) {
+            ctx.put("request", request);
+        }
+
+        if (headers != null) {
+            ctx.put("headers", headers);
+        }
+
+        if (accessToken != null) {
+            ctx.put("access_token", accessToken);
+        }
 
         ExecutionResult executionResult = getSchema().execute(ExecutionInput.newExecutionInput()
                 .query(query)
                 .operationName(operationName)
-                .variables(variables)
+                .variables(v)
                 .graphQLContext(ctx)
                 .build());
-        return executionResult.toSpecification();
+        return executionResult;
     }
 
 
