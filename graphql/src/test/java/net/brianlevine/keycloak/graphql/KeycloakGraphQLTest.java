@@ -32,7 +32,7 @@ public abstract class KeycloakGraphQLTest {
     public final static String MASTER_REALM = "master";
     public final static int NUM_FIXTURE_REALMS = 2;
 
-    private final static String KEYCLOAK_VERSION = "26.0.1";
+    private final static String KEYCLOAK_VERSION = "26.0.2";
     private final static String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:" + KEYCLOAK_VERSION;
 
 
