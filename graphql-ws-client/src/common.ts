@@ -5,7 +5,7 @@
  */
 
 import { GraphQLError } from 'graphql';
-import { areGraphQLErrors, extendedTypeof, isObject } from './utils';
+import { areGraphQLErrors, extendedTypeof, isObject } from './utils.js';
 
 /**
  * The WebSocket sub-protocol used for the [GraphQL over WebSocket Protocol](https://github.com/graphql/graphql-over-http/blob/main/rfcs/GraphQLOverWebSocket.md).

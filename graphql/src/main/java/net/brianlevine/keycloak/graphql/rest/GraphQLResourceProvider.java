@@ -54,15 +54,24 @@ public class GraphQLResourceProvider implements RealmResourceProvider {
 		String operationName = (String)body.get("operationName");
 		Object variables = body.get("variables");
 
-		@SuppressWarnings("unchecked")
+		String authValue = headers.getHeaderString("Authorization");
+		String accessToken;
+		if (authValue != null && authValue.startsWith("Bearer ")) {
+			accessToken = authValue.replace("Bearer ", "");
+		}
+		else {
+			throw new NotAuthorizedException("Bearer (access) token in Authorization header is missing");
+		}
+
 		Map<String, Object> result = graphql.executeQueryToSpec(
 				query,
 				operationName,
 				session,
-				null,
+				accessToken,
 				request,
 				headers,
-				variables != null ? (Map<String, Object>) variables : Collections.emptyMap());
+				variables != null ? (Map<String, Object>) variables : Collections.emptyMap(),
+				null);
 
 		ObjectMapper mapper = new ObjectMapper();
 

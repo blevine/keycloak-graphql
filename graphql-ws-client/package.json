@@ -20,6 +20,7 @@
     "ws7": "npm:ws@^7.5.9"
   },
   "dependencies": {
+    "jwt-decode": "^4.0.0",
     "request": "^2.88.2"
   }
 }

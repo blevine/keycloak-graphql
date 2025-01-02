@@ -8,6 +8,7 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.SchemaPrinter;
 import io.leangen.graphql.GraphQLRuntime;
 import io.leangen.graphql.GraphQLSchemaGenerator;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.HttpHeaders;
 import net.brianlevine.keycloak.graphql.queries.ErrorQuery;
@@ -16,9 +17,16 @@ import net.brianlevine.keycloak.graphql.queries.UserQuery;
 import net.brianlevine.keycloak.graphql.subscriptions.EventsSubscription;
 import net.brianlevine.keycloak.graphql.util.OverrideTypeInfoGenerator;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.representations.AccessToken;
 
+import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
+
+import static net.brianlevine.keycloak.graphql.Constants.*;
+
+import static net.brianlevine.keycloak.graphql.util.Auth.verifyAccessToken;
+import static net.brianlevine.keycloak.graphql.util.Util.fakeHttpHeadersWithToken;
 
 public class GraphQLController {
 
@@ -65,45 +73,60 @@ public class GraphQLController {
     }
 
     public Map<String, Object> executeQueryToSpec(
-            String query,
+            @Nonnull String query,
             String operationName,
-            KeycloakSession session,
-            String accessToken,
+            @Nonnull KeycloakSession session,
+            @Nonnull String accessToken,
             Request request,
             HttpHeaders headers,
-            Map<String, Object> variables) {
+            Map<String, Object> variables,
+            Map<String, Object> additionalContext) {
 
-        return executeQuery(query, operationName, session, accessToken, request, headers, variables).toSpecification();
+        return executeQuery(query, operationName, session, accessToken, request, headers, variables, additionalContext).toSpecification();
     }
 
     public ExecutionResult executeQuery(
-            String query,
+            @Nonnull String query,
             String operationName,
-            KeycloakSession session,
-            String accessToken,
+            @Nonnull KeycloakSession session,
+            @Nonnull String accessToken,
             Request request,
             HttpHeaders headers,
-            Map<String, Object> variables) {
+            Map<String, Object> variables,
+            Map<String, Object> additionalContext) {
 
         Map<String, Object> ctx = new HashMap<>();
 
-        Map<String, Object> v =  variables == null ? new HashMap<>(): variables;
-
-        if (session != null) {
-            ctx.put("keycloak.session", session);
+        if (additionalContext != null) {
+            ctx.putAll(additionalContext);
         }
+
+        Map<String, Object> v =  variables == null ? new HashMap<>(): variables;
+        ctx.put(KEYCLOAK_SESSION_KEY, session);
 
         if (request != null) {
             ctx.put("request", request);
         }
 
-        if (headers != null) {
-            ctx.put("headers", headers);
+
+        // validate token
+        AccessToken at = verifyAccessToken(accessToken, session);
+
+        if (at == null) {
+            throw new NotAuthorizedException("Access token expired");
         }
 
-        if (accessToken != null) {
-            ctx.put("access_token", accessToken);
+        // No headers means that we're being called from the WebSocket server as a result of a subscription
+        // Need to fake HTTP headers because some Keycloak resource classes require the Bearer token in order
+        // to do authn and authz.
+
+        HttpHeaders h = headers;
+        if (h == null) {
+            h = fakeHttpHeadersWithToken(accessToken);
         }
+
+        ctx.put(HTTP_HEADERS_KEY, h);
+        ctx.put(ACCESS_TOKEN_KEY, accessToken);
 
         ExecutionResult executionResult = getSchema().execute(ExecutionInput.newExecutionInput()
                 .query(query)
@@ -125,4 +148,5 @@ public class GraphQLController {
                         .includeIntrospectionTypes(true)
         ).print(getSchema().getGraphQLSchema());
     }
+
 }

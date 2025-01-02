@@ -461,6 +461,8 @@ export interface Client extends Disposable {
    * can happen on iOS Safari, see: https://github.com/enisdenjo/graphql-ws/discussions/290.
    */
   terminate(): void;
+
+  sendMessage(message: any): Promise<void> ;
 }
 
 /**
@@ -979,8 +981,16 @@ export function createClient<
     };
   }
 
+  async function sendMessage(message: any) {
+    if (connecting) {
+      const [socket] = await connecting;
+      socket.send(JSON.stringify(message));
+    }
+  }
+
   return {
     on: emitter.on,
+    sendMessage,
     subscribe,
     iterate(request) {
       const pending: ExecutionResult<any, any>[] = [];

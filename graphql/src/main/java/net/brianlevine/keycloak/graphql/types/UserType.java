@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static net.brianlevine.keycloak.graphql.Constants.HTTP_HEADERS_KEY;
+
 @SuppressWarnings("unused")
 public class UserType implements RoleHolder, GroupHolder, BaseType {
     private final UserRepresentation delegate;
@@ -54,14 +56,14 @@ public class UserType implements RoleHolder, GroupHolder, BaseType {
     @Override
     @GraphQLIgnore
     public Stream<RoleModel> getRolesStream(GraphQLContext ctx) {
-        UserPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).users();
+        UserPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel()).users();
         return eval.canView(getUserModel()) ? getUserModel().getRoleMappingsStream() : Stream.empty();
     }
 
     @Override
     @GraphQLIgnore
     public Stream<RoleModel> getRolesStream(int start, int limit, GraphQLContext ctx) {
-        UserPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).users();
+        UserPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel()).users();
         return eval.canView(getUserModel()) ? getUserModel().getRoleMappingsStream().skip(start).limit(limit) : Stream.empty();
     }
 
@@ -70,7 +72,7 @@ public class UserType implements RoleHolder, GroupHolder, BaseType {
     public Stream<GroupModel> getGroupsStream(int start, int limit, GraphQLContext ctx) {
         Stream<GroupModel> stream = getUserModel().getGroupsStream(null, start, limit);
 
-        GroupPermissionEvaluator groupsEvaluator = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).groups();
+        GroupPermissionEvaluator groupsEvaluator = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel()).groups();
 
         boolean canViewGlobal = groupsEvaluator.canView();
         return stream.filter(g -> canViewGlobal || groupsEvaluator.canView(g));
@@ -81,7 +83,7 @@ public class UserType implements RoleHolder, GroupHolder, BaseType {
     public Stream<GroupModel> getGroupsStream(GraphQLContext ctx) {
         Stream<GroupModel> stream = getUserModel().getGroupsStream();
 
-        GroupPermissionEvaluator groupsEvaluator = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).groups();
+        GroupPermissionEvaluator groupsEvaluator = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel()).groups();
 
         boolean canViewGlobal = groupsEvaluator.canView();
         return stream.filter(g -> canViewGlobal || groupsEvaluator.canView(g));

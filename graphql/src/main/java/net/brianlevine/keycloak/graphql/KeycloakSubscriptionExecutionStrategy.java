@@ -26,9 +26,15 @@ import graphql.language.Field;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 
+import jakarta.websocket.Session;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.core.HttpHeaders;
+import net.brianlevine.keycloak.graphql.util.Auth;
 import org.keycloak.models.KeycloakSession;
 
+import org.keycloak.models.RealmModel;
 import org.keycloak.quarkus.runtime.integration.cdi.KeycloakBeanProducer;
+import org.keycloak.representations.AccessToken;
 import org.reactivestreams.Publisher;
 
 import java.util.concurrent.CompletableFuture;
@@ -38,6 +44,8 @@ import java.util.function.Function;
 import static graphql.Assert.assertTrue;
 import static graphql.execution.instrumentation.SimpleInstrumentationContext.nonNullCtx;
 import static java.util.Collections.singletonMap;
+import static net.brianlevine.keycloak.graphql.Constants.*;
+import static net.brianlevine.keycloak.graphql.util.Util.fakeHttpHeadersWithToken;
 
 /**
  * A subscription execution strategy that lets us interpose before and after the subscription event is
@@ -45,14 +53,10 @@ import static java.util.Collections.singletonMap;
  * methods because the executeSubscriptionEvent method is private.
  */
 public class KeycloakSubscriptionExecutionStrategy extends SubscriptionExecutionStrategy {
-    public KeycloakSubscriptionExecutionStrategy() {
-        super();
-    }
 
     public KeycloakSubscriptionExecutionStrategy(DataFetcherExceptionHandler exceptionHandler) {
         super(exceptionHandler);
     }
-
 
     @Override
     public CompletableFuture<ExecutionResult> execute(ExecutionContext executionContext, ExecutionStrategyParameters parameters) throws NonNullableFieldWasNullException {
@@ -76,20 +80,50 @@ public class KeycloakSubscriptionExecutionStrategy extends SubscriptionExecution
             Function<Object, CompletionStage<ExecutionResult>> mapperFunction = (eventPayload) -> {
                 System.out.println("BEFORE executeSubscriptionEvent");
 
+
+                KeycloakSession originalKeycloakSession = executionContext.getGraphQLContext().get(KEYCLOAK_SESSION_KEY);
+                RealmModel realmModel = originalKeycloakSession.getContext().getRealm();
+
                 KeycloakSession kcSession = new KeycloakBeanProducer().getKeycloakSession();
-                kcSession.getTransactionManager().begin();
 
-                GraphQLContext ctx = executionContext.getGraphQLContext();
-                ctx.put("keycloak.session", kcSession);
+                CompletableFuture<ExecutionResult> f;
+                try (kcSession) {
+                    kcSession.getContext().setRealm(realmModel);
+                    kcSession.getTransactionManager().begin();
 
-                // Resolvers can use this to determine that the execution is happening as a result of a
-                // subscription event.
-                ctx.put("isSubscription", true);
+                    GraphQLContext ctx = executionContext.getGraphQLContext();
 
-                CompletableFuture<ExecutionResult> f =  executeSubscriptionEvent(executionContext, parameters, eventPayload);
+                    // Get the access token from the Tyrus (WebSocket) session associated with this execution
+                    String wsSessionId = ctx.get(SESSION_ID_KEY);
+                    Session wsSession = SharedSessionStore.getInstance().getSession(wsSessionId);
+                    String accessToken = (String) wsSession.getUserProperties().get(ACCESS_TOKEN_KEY);
+
+                    AccessToken validatedToken = Auth.verifyAccessToken(accessToken, kcSession);
+
+                    if (validatedToken == null) {
+                        throw new NotAuthorizedException("Access token is not valid");
+                    }
+
+                    HttpHeaders headers = fakeHttpHeadersWithToken(accessToken);
+
+                    ctx.put(ACCESS_TOKEN_KEY, accessToken);
+                    ctx.put(HTTP_HEADERS_KEY, headers);
+                    ctx.put(KEYCLOAK_SESSION_KEY, kcSession);
+
+                    // Resolvers can use this to determine that the execution is happening as a result of a
+                    // subscription event.
+                    ctx.put(IS_SUBSCRIPTION_KEY, true);
+
+                    f = executeSubscriptionEvent(executionContext, parameters, eventPayload);
+
+                } catch (Exception e) {
+                    kcSession.getTransactionManager().rollback();
+                    throw e;
+                }
+
                 return f.thenApply((a) -> {
                     System.out.println("After executeSubscriptionEvent");
-                    kcSession.close();
+                    kcSession.getTransactionManager().commit();
                     return a;
                 });
             };
@@ -114,7 +148,7 @@ public class KeycloakSubscriptionExecutionStrategy extends SubscriptionExecution
             if (publisher != null) {
                 assertTrue(publisher instanceof Publisher, () -> "Your data fetcher must return a Publisher of events when using graphql subscriptions");
             }
-            //noinspection unchecked
+
             return (Publisher<Object>) publisher;
         });
     }

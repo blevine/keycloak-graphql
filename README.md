@@ -75,13 +75,28 @@ a Websocket server. _Any advice in that area would be appreciated_. I suspect th
 be helpful here, but I was not successful in integrating Quarkus extensions into my Keycloak extension. In fact, it
 looks like enhancing Keycloak with Quarkus extensions is not currently supported.
 
-### Authentication and subscriptions
+### Subscriptions and authentication/authorization
 A sample client is included in the graphql-ws-client module which is based on the 
-[graphql-ws client](https://github.com/enisdenjo/graphql-ws).
+[graphql-ws client](https://github.com/enisdenjo/graphql-ws). I've taken the approach of making the client responsible
+for authenticating and obtaining an access token. The graphql-transport-ws Ping and Pong messages are used as follows:
+1. The client obtains an access token from some IdP and passes the access token as part of the payload in the 
+ConnectionInit message.
+2. The server validates the access token and stores it in the session. If the access token cannot be validated, the
+socket is closed.
+3. The access token's expiration time is retrieved and a timer is started that times out just before the access
+token expires.
+4. When the timer expires, a Ping message is sent to the client with a payload indicating that the access token has expired.
+5. The client is then responsible for contacting the IdP to obtain a new access token (i.e., by refresh or re-authentication).
+6. The client sends the new access token back in a Pong message.
+7. The server validates the access token and stores it in the session. If the access token cannot be validated, the
+socket is closed.
 
-I've taken the simple approach of making the client responsible for refreshing the access token when it expires and then
-re-issuing the subscription. This is as opposed to having the server side determine whether the access token is
-expired when the subscription event is fired and then refreshing it. _I'm looking for feedback on this approach_.
+When the client creates a new subscription, the access token is retrieved from the session, validated, and added to the GraphQL context.
+The access token is also retrieved from the session, validated, and added to the GraphQL context whenever an established 
+subscription event "fires". If the access token cannot be validated, the socket is closed.
+
+Here is some additional [discussion of credential refresh](https://github.com/enisdenjo/graphql-ws/discussions/292) using 
+the graphql-transport-ws protocol.
 
 ### Enabling the event subscriptions
 To activate the event listener to support the event and adminEvent subscriptions, some Keycloak configuration is required:

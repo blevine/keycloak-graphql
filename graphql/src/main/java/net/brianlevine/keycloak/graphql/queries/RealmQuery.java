@@ -22,13 +22,15 @@ import org.keycloak.services.resources.admin.permissions.AdminPermissions;
 import java.util.List;
 import java.util.Objects;
 
+import static net.brianlevine.keycloak.graphql.Constants.KEYCLOAK_SESSION_KEY;
+
 
 public class RealmQuery {
 
     @GraphQLQuery(name = "realms", description = "Return a collection of realms that are viewable by the caller.")
     public Page<RealmType> getRealms(PagingOptions options, @GraphQLRootContext GraphQLContext ctx) {
 
-        KeycloakSession session = ctx.get("keycloak.session");
+        KeycloakSession session = ctx.get(KEYCLOAK_SESSION_KEY);
         AdminAuth auth = Auth.authenticateRealmAdminRequest(session, ctx);
         Page<RealmType> ret;
 
@@ -56,7 +58,7 @@ public class RealmQuery {
 
     @GraphQLQuery(name = "realm", description = "Get a realm by ID.")
     public RealmType getRealmById(@GraphQLArgument String id, @GraphQLRootContext GraphQLContext ctx) {
-        KeycloakSession session = ctx.get("keycloak.session");
+        KeycloakSession session = ctx.get(KEYCLOAK_SESSION_KEY);
         RealmModel realm = session.realms().getRealm(id);
         AdminAuth auth = Auth.authenticateRealmAdminRequest(session, ctx);
 
@@ -65,7 +67,7 @@ public class RealmQuery {
 
     @GraphQLQuery(name = "realm", description = "Get realm by name.")
     public RealmType getRealmByName(@GraphQLArgument String name, @GraphQLRootContext GraphQLContext ctx) {
-        KeycloakSession session = ctx.get("keycloak.session");
+        KeycloakSession session = ctx.get(KEYCLOAK_SESSION_KEY);
         RealmModel realm = session.realms().getRealmByName(name);
         AdminAuth auth = Auth.authenticateRealmAdminRequest(session, ctx);
         return toRealmType(session, realm, auth);
@@ -75,7 +77,7 @@ public class RealmQuery {
 
     @GraphQLQuery(name = "realm", description = "Get the current realm (i.e., the realm against which the caller authenticated.")
     public RealmType getRealm( @GraphQLRootContext GraphQLContext ctx) {
-        KeycloakSession session = ctx.get("keycloak.session");
+        KeycloakSession session = ctx.get(KEYCLOAK_SESSION_KEY);
         RealmModel realm = session.getContext().getRealm();
         AdminAuth auth = Auth.authenticateRealmAdminRequest(session, ctx);
 

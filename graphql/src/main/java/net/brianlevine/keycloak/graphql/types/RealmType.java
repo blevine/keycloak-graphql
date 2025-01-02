@@ -38,6 +38,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static net.brianlevine.keycloak.graphql.Constants.HTTP_HEADERS_KEY;
+
 @GraphQLType
 @SuppressWarnings("unused")
 public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
@@ -59,7 +61,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     @Override
     @GraphQLIgnore
     public Stream<RoleModel> getRolesStream(GraphQLContext ctx) {
-        RolePermissionEvaluator evaluator = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).roles();
+        RolePermissionEvaluator evaluator = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel()).roles();
 
         return evaluator.canList(getRealmModel()) ? getRealmModel().getRolesStream() : Stream.empty();
     }
@@ -67,7 +69,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     @Override
     @GraphQLIgnore
     public Stream<RoleModel> getRolesStream(int start, int limit, GraphQLContext ctx) {
-        RolePermissionEvaluator evaluator = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).roles();
+        RolePermissionEvaluator evaluator = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel()).roles();
 
         return evaluator.canList(getRealmModel()) ? getRealmModel().getRolesStream(start, limit) : Stream.empty();
     }
@@ -77,7 +79,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     public Stream<GroupModel> getGroupsStream(int start, int limit, GraphQLContext ctx) {
         Stream<GroupModel> stream =  kcSession.groups().getTopLevelGroupsStream(getRealmModel(), start, limit);
 
-        GroupPermissionEvaluator groupsEvaluator = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).groups();
+        GroupPermissionEvaluator groupsEvaluator = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel()).groups();
 
         boolean canViewGlobal = groupsEvaluator.canView();
         return stream.filter(g -> canViewGlobal || groupsEvaluator.canView(g));
@@ -88,7 +90,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     public Stream<GroupModel> getGroupsStream(GraphQLContext ctx) {
         Stream<GroupModel> stream =  kcSession.groups().getTopLevelGroupsStream(getRealmModel());
 
-        GroupPermissionEvaluator groupsEvaluator = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).groups();
+        GroupPermissionEvaluator groupsEvaluator = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel()).groups();
 
         boolean canViewGlobal = groupsEvaluator.canView();
         return stream.filter(g -> canViewGlobal || groupsEvaluator.canView(g));
@@ -557,7 +559,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     // TODO: Optimize with SQL query rather than iterating over groups by name
     @GraphQLQuery
     public Page<GroupType> getDefaultGroups(@GraphQLArgument PagingOptions options, @GraphQLRootContext GraphQLContext ctx) {
-        AdminPermissionEvaluator auth = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel());
+        AdminPermissionEvaluator auth = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel());
 
         if (auth.realm().canViewRealm()) {
             KeycloakSession session = getKeycloakSession();

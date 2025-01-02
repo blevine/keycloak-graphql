@@ -9,8 +9,11 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "useUnknownInCatchVariables": false,
+    "allowJs": true,
     "checkJs": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "outDir": "./dist",
+    "module": "esnext"
   },
   "include": [
     "src",

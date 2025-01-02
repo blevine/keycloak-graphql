@@ -1,10 +1,9 @@
 package net.brianlevine.keycloak.graphql.util;
 
-import io.vertx.core.MultiMap;
+
 import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import org.jboss.resteasy.reactive.common.util.CookieParser;
 import org.jboss.resteasy.reactive.common.util.DateUtil;
@@ -17,28 +16,22 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Wraps a Vert.x HeadersMultiMap in a jakarta.ws.rs.core.HttpHeaders with a lot of help
+ * Wraps a  MultivaluedMap in a jakarta.ws.rs.core.HttpHeaders with a lot of help
  * from RestEasy
  */
 public class HttpHeaderWrapper  implements HttpHeaders {
-    private final MultiMap headers;
+
     private final Map<String, Cookie> cookies;
 
     MultivaluedMap<String, String> jheaders;
 
-    public HttpHeaderWrapper(MultiMap headers) {
-        this.headers = headers;
-        this.cookies = new HashMap<>();
-    }
 
     public HttpHeaderWrapper(MultivaluedMap<String, String> headers) {
-        this.headers = null;
         this.jheaders = headers;
         this.cookies = new HashMap<>();;
     }
 
     public HttpHeaderWrapper(MultivaluedMap<String, String> headers, Map<String, Cookie> cookies) {
-        this.headers = null;
         this.jheaders = headers;
         this.cookies = cookies;
     }
@@ -67,15 +60,6 @@ public class HttpHeaderWrapper  implements HttpHeaders {
 
     @Override
     public MultivaluedMap<String, String> getRequestHeaders() {
-
-        if (jheaders == null) {
-            jheaders = new MultivaluedHashMap<>();
-
-            for (MultivaluedMap.Entry<String, String> entry : headers) {
-                jheaders.add(entry.getKey(), entry.getValue());
-            }
-        }
-
         return jheaders;
     }
 

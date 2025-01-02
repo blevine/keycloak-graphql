@@ -65,4 +65,14 @@ public class ApolloMessage {
         return message;
     }
 
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("ApolloMessage{");
+        sb.append("type=").append(type);
+        sb.append(", id=").append(id);
+        sb.append(", payload=").append(payload.toString());
+
+        return sb.toString();
+    }
+
 }

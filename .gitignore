@@ -30,3 +30,4 @@ dependency-reduced-pom.xml
 node_modules
 kc_data
 
+/graphql-ws-client/dist/

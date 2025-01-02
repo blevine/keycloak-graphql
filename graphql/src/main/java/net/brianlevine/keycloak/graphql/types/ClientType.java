@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static net.brianlevine.keycloak.graphql.Constants.HTTP_HEADERS_KEY;
+
 @GraphQLType
 @SuppressWarnings("unused")
 public class ClientType implements Container, RoleHolder, BaseType {
@@ -406,7 +408,7 @@ public class ClientType implements Container, RoleHolder, BaseType {
     @Override
     @GraphQLIgnore
     public Stream<RoleModel> getRolesStream(GraphQLContext ctx) {
-        RolePermissionEvaluator evaluator = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).roles();
+        RolePermissionEvaluator evaluator = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel()).roles();
 
         return evaluator.canList(getRealmModel()) ? getRealmModel().getRolesStream() : Stream.empty();
     }
@@ -414,7 +416,7 @@ public class ClientType implements Container, RoleHolder, BaseType {
     @Override
     @GraphQLIgnore
     public Stream<RoleModel> getRolesStream(int start, int limit, GraphQLContext ctx) {
-        RolePermissionEvaluator evaluator = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).roles();
+        RolePermissionEvaluator evaluator = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel()).roles();
 
         return evaluator.canList(getRealmModel()) ? getRealmModel().getRolesStream(start, limit) : Stream.empty();
     }

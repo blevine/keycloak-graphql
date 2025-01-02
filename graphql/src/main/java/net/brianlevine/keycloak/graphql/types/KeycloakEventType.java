@@ -17,6 +17,8 @@ import org.keycloak.models.RealmModel;
 import java.util.Date;
 import java.util.Map;
 
+import static net.brianlevine.keycloak.graphql.Constants.KEYCLOAK_SESSION_KEY;
+
 
 @GraphQLType
 public class KeycloakEventType {
@@ -60,7 +62,7 @@ public class KeycloakEventType {
     public ClientType getClient(@GraphQLEnvironment ResolutionEnvironment env) {
         GraphQLContext ctx = env.dataFetchingEnvironment.getGraphQlContext();
         String clientId = event != null ?  event.getClientId() : adminEvent.getAuthDetails().getClientId();
-        KeycloakSession kcSession = ctx.get("keycloak.session");
+        KeycloakSession kcSession = ctx.get(KEYCLOAK_SESSION_KEY);
         RealmModel realmModel = kcSession.getContext().getRealm();
         ClientModel clientModel = kcSession.getContext().getRealm().getClientByClientId(clientId);
 

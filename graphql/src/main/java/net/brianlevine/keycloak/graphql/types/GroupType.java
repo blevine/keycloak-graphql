@@ -17,6 +17,8 @@ import org.keycloak.utils.GroupUtils;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static net.brianlevine.keycloak.graphql.Constants.HTTP_HEADERS_KEY;
+
 @GraphQLType
 @SuppressWarnings("unused")
 public class GroupType implements RoleHolder, BaseType {
@@ -57,14 +59,14 @@ public class GroupType implements RoleHolder, BaseType {
     @Override
     @GraphQLIgnore
     public Stream<RoleModel> getRolesStream(GraphQLContext ctx) {
-        GroupPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).groups();
+        GroupPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel()).groups();
         return eval.canView(getGroupModel()) ? getGroupModel().getRoleMappingsStream() : Stream.empty();
     }
 
     @Override
     @GraphQLIgnore
     public Stream<RoleModel> getRolesStream(int start, int limit, GraphQLContext ctx) {
-        GroupPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx.get("headers"), getKeycloakSession(), getRealmModel()).groups();
+        GroupPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), getKeycloakSession(), getRealmModel()).groups();
         return eval.canView(getGroupModel()) ? getGroupModel().getRoleMappingsStream().skip(start).limit(limit) : Stream.empty();
     }
 
@@ -154,7 +156,7 @@ public class GroupType implements RoleHolder, BaseType {
         GroupModel gm = getGroupModel();
         RealmModel realmModel = getRealmModel();
         KeycloakSession session = getKeycloakSession();
-        GroupPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx.get("headers"), session, realmModel).groups();
+        GroupPermissionEvaluator eval = Auth.getAdminPermissionEvaluator(ctx.get(HTTP_HEADERS_KEY), session, realmModel).groups();
 
         // TODO: Do we need to evaluate the permission on the parent group here? If the caller is able to get here, then
         //       didn't they already have access to the parent group?
