@@ -11,6 +11,7 @@ import io.leangen.graphql.GraphQLSchemaGenerator;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.HttpHeaders;
+import net.brianlevine.keycloak.graphql.mutations.RealmMutation;
 import net.brianlevine.keycloak.graphql.queries.ErrorQuery;
 import net.brianlevine.keycloak.graphql.queries.RealmQuery;
 import net.brianlevine.keycloak.graphql.queries.UserQuery;
@@ -29,6 +30,13 @@ import static net.brianlevine.keycloak.graphql.util.Auth.verifyAccessToken;
 import static net.brianlevine.keycloak.graphql.util.Util.fakeHttpHeadersWithToken;
 
 public class GraphQLController {
+    private static final Object[] SINGLETONS = new Object[] {
+            new RealmQuery(),
+            new ErrorQuery(),
+            new UserQuery(),
+            new RealmMutation(),
+            new EventsSubscription()
+    };
 
     private static GraphQL graphQL;
 
@@ -46,15 +54,11 @@ public class GraphQLController {
         }
 
         if (graphQL == null) {
-            RealmQuery realmQuery = new RealmQuery();
-            ErrorQuery errorQuery = new ErrorQuery();
-            UserQuery userQuery = new UserQuery();
-            EventsSubscription testSubscription = new EventsSubscription();
 
             //Schema generated from query classes
             GraphQLSchema schema = new GraphQLSchemaGenerator()
                     .withBasePackages("net.brianlevine.keycloak.graphql", "org.keycloak.events", "org.keycloak.events.admin")
-                    .withOperationsFromSingletons(realmQuery, errorQuery, userQuery, testSubscription)
+                    .withOperationsFromSingletons(SINGLETONS)
                     .withRelayConnectionCheckRelaxed()
                     .withTypeInfoGenerator(new OverrideTypeInfoGenerator().withHierarchicalNames(false))
                     .generate();

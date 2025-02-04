@@ -45,8 +45,15 @@ import static net.brianlevine.keycloak.graphql.Constants.HTTP_HEADERS_KEY;
 public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 
     private final RealmRepresentation delegate;
-    private final KeycloakSession kcSession;
+    private KeycloakSession kcSession;
     private RealmModel realmModel;
+
+    /**
+     * Default constructor when this type is used as an input type
+     */
+    public RealmType() {
+        this.delegate = new RealmRepresentation();
+    }
 
     public RealmType(KeycloakSession kcSession, RealmRepresentation delegate) {
         this.delegate = delegate;
@@ -107,6 +114,11 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
     @GraphQLIgnore
+    public RealmRepresentation getRealmRepresentation() {
+        return delegate;
+    }
+
+    @GraphQLIgnore
     public KeycloakSession getKeycloakSession() {
         return kcSession;
     }
@@ -134,6 +146,10 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
 
     public String getName() {
         return getRealm();
+    }
+
+    public void setName(String name) {
+        setRealm(name);
     }
 
 
@@ -837,7 +853,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
-    public void setEventsEnabled(boolean eventsEnabled) {
+    public void setEventsEnabled(Boolean eventsEnabled) {
         delegate.setEventsEnabled(eventsEnabled);
     }
 
@@ -847,7 +863,7 @@ public class RealmType implements Container, GroupHolder, RoleHolder, BaseType {
     }
 
 
-    public void setEventsExpiration(long eventsExpiration) {
+    public void setEventsExpiration(Long eventsExpiration) {
         delegate.setEventsExpiration(eventsExpiration);
     }
 
