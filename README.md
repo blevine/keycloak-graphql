@@ -34,7 +34,8 @@ I am not accepting pull requests at this time. Please feel free to post question
 be tagged releases to support some number of recent Keycloak versions.
 - Initially I'm concentrating on the following types: Realm, Client, User, Group, Role and getting the queries
 on those types right without regard to performance improvements.
-- Only read operations (GraphQL queries) are supported. Mutations are not yet supported.
+- Concentrating first on read operations (GraphQL queries). I'm slowly adding support for Mutations with
+the first example Mutation being `createRealm`.
 - A sample Subscription service is included that allows the caller to register for Keycloak Events
 and Admin Events. See below for implementation details.
 - The GraphQL types rely heavily on some of the existing REST code, most notably the *Resource 
