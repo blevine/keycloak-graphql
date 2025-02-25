@@ -4,8 +4,10 @@ import graphql.GraphQLContext;
 import io.leangen.graphql.annotations.GraphQLIgnore;
 
 import net.brianlevine.keycloak.graphql.util.Auth;
+import net.brianlevine.keycloak.graphql.util.Page;
 import org.keycloak.models.*;
 import org.keycloak.models.utils.ModelToRepresentation;
+import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.services.resources.admin.permissions.GroupPermissionEvaluator;
 import org.keycloak.services.resources.admin.permissions.UserPermissionEvaluator;
@@ -13,6 +15,7 @@ import org.keycloak.services.resources.admin.permissions.UserPermissionEvaluator
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static net.brianlevine.keycloak.graphql.Constants.HTTP_HEADERS_KEY;
@@ -22,13 +25,17 @@ public class UserType implements RoleHolder, GroupHolder, BaseType {
     private final UserRepresentation delegate;
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final KeycloakSession kcSession;
+    private KeycloakSession kcSession;
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final RealmModel realmModel;
+    private RealmModel realmModel;
 
     @SuppressWarnings("FieldCanBeLocal")
     private UserModel userModel;
+
+    public UserType() {
+        this.delegate = new UserRepresentation();
+    }
 
     public UserType(KeycloakSession kcSession, RealmModel realmModel, UserRepresentation delegate) {
         this.kcSession = kcSession;
@@ -51,6 +58,11 @@ public class UserType implements RoleHolder, GroupHolder, BaseType {
         }
 
         return userModel;
+    }
+
+    @GraphQLIgnore
+    public UserRepresentation getUserRepresentation() {
+        return delegate;
     }
 
     @Override
@@ -124,7 +136,7 @@ public class UserType implements RoleHolder, GroupHolder, BaseType {
     }
 
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(Boolean enabled) {
         delegate.setEnabled(enabled);
     }
 
@@ -176,7 +188,7 @@ public class UserType implements RoleHolder, GroupHolder, BaseType {
     }
 
 
-    public void setEmailVerified(boolean verified) {
+    public void setEmailVerified(Boolean verified) {
         delegate.setEmailVerified(verified);
     }
 
@@ -204,6 +216,23 @@ public class UserType implements RoleHolder, GroupHolder, BaseType {
 
     public void setCreatedTimestamp(Date timestamp){
         delegate.setCreatedTimestamp(timestamp.getTime());
+    }
+
+    public void setCredentials(List<CredentialType> credentials) {
+        delegate.setCredentials(credentials.stream().map(CredentialType::getCredentialRepresentation).collect(Collectors.toList()));
+    }
+
+    public Page<CredentialType> getCredentials(PagingOptions options) {
+        List<CredentialRepresentation> creds = delegate.getCredentials();
+
+        return new Page<>(creds.size(), options.limit, creds.stream().map(CredentialType::new).toList());
+    }
+
+    public void setPassword(String password) {
+        CredentialRepresentation cred = new CredentialRepresentation();
+        cred.setType("password");
+        cred.setValue(password);
+        delegate.setCredentials(List.of(cred));
     }
 
 

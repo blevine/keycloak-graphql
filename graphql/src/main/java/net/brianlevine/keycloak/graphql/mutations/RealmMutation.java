@@ -3,7 +3,7 @@ package net.brianlevine.keycloak.graphql.mutations;
 import graphql.GraphQLContext;
 import io.leangen.graphql.annotations.GraphQLMutation;
 import io.leangen.graphql.annotations.GraphQLRootContext;
-import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.ForbiddenException;
 import net.brianlevine.keycloak.graphql.types.RealmType;
 import net.brianlevine.keycloak.graphql.util.Auth;
 import org.keycloak.models.KeycloakSession;
@@ -20,6 +20,7 @@ public class RealmMutation {
         KeycloakSession session = ctx.get(KEYCLOAK_SESSION_KEY);
         AdminAuth auth = Auth.authenticateRealmAdminRequest(session, ctx);
 
+        // Must be the administration realm and user must be admin
         if (AdminPermissions.realms(session, auth).canCreateRealm()) {
             RealmManager realmMgr = new RealmManager(session);
             RealmModel realmModel = realmMgr.importRealm(realm.getRealmRepresentation(), false);
@@ -27,6 +28,6 @@ public class RealmMutation {
             return realmType;
         }
 
-        throw new NotAuthorizedException("Caller does not have the required permission.");
+        throw new ForbiddenException("Caller does not have the required permission.");
     }
 }

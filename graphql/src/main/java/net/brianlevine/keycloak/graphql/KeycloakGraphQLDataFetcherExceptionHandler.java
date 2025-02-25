@@ -35,9 +35,16 @@ public class KeycloakGraphQLDataFetcherExceptionHandler extends SimpleDataFetche
     }
 
     private static Map<String, Object> getExtensions(Throwable exception) {
-        String[] parts = exception.getClass().getName().split("\\.");
-        String code = parts[parts.length - 1];
         Map<String, Object> add = new HashMap<>();
+        String code = null;
+        if (exception instanceof ExceptionWithCode) {
+            code = ((ExceptionWithCode)exception).getCode().name();
+        }
+        else {
+            String[] parts = exception.getClass().getName().split("\\.");
+            code = parts[parts.length - 1];
+        }
+
         add.put("code", code);
         return add;
     }

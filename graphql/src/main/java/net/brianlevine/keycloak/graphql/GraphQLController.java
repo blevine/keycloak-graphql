@@ -12,6 +12,7 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.HttpHeaders;
 import net.brianlevine.keycloak.graphql.mutations.RealmMutation;
+import net.brianlevine.keycloak.graphql.mutations.UserMutation;
 import net.brianlevine.keycloak.graphql.queries.ErrorQuery;
 import net.brianlevine.keycloak.graphql.queries.RealmQuery;
 import net.brianlevine.keycloak.graphql.queries.UserQuery;
@@ -35,6 +36,7 @@ public class GraphQLController {
             new ErrorQuery(),
             new UserQuery(),
             new RealmMutation(),
+            new UserMutation(),
             new EventsSubscription()
     };
 

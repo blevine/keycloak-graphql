@@ -8,7 +8,7 @@ import org.keycloak.admin.client.resource.UserResource;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class RealmQueriesTest extends KeycloakGraphQLTest {
+public class RealmQueryTest extends KeycloakGraphQLTest {
 
     @Test
     public void shouldReturnTheDefaultRealm() {
