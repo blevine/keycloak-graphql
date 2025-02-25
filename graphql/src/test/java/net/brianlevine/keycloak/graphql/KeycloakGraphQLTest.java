@@ -108,7 +108,7 @@ public abstract class KeycloakGraphQLTest {
 
     @AfterEach
     public void after() {
-        deleteRealm(TEST_REALM);
+        deleteRealms();
     }
 
     public static UserResource createUser(String username, String password) {
@@ -191,8 +191,17 @@ public abstract class KeycloakGraphQLTest {
         return masterKeycloakClient.realms().realm(realmName);
     }
 
-    public void deleteRealm(String realmName) {
-        masterKeycloakClient.realm(realmName).remove();
+    /**
+     * Delete all realms except for master
+     *
+     */
+    public void deleteRealms() {
+        masterKeycloakClient.realms().findAll().forEach(realm -> {
+            if (!realm.getRealm().equals("master")) {
+                masterKeycloakClient.realm(realm.getRealm()).remove();
+            }
+
+        });
     }
 
     public ValidatableResponse sendGraphQLRequestAsMasterAdmin(String graphQLRequest) {

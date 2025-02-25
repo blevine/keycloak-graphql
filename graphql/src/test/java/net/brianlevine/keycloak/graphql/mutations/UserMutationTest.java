@@ -39,7 +39,7 @@ class UserMutationTest extends KeycloakGraphQLTest {
             """, testUserName, testFirstName, testLastName, testEmail, testPassword);
 
         ValidatableResponse response = sendGraphQLRequestAsTestAdmin(mutation);
-        response.log().all();
+        //response.log().all();
 
         // Keycloak lower-cases user name and email
         response.body("data.createUser.username", equalTo(testUserName.toLowerCase()));
@@ -67,6 +67,6 @@ class UserMutationTest extends KeycloakGraphQLTest {
             """, testUserName);
 
         ValidatableResponse response = sendGraphQLRequestAsTestAdmin(mutation);
-        response.log().all();
+        //response.log().all();
     }
 }
