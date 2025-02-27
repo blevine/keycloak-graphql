@@ -4,6 +4,7 @@ import graphql.GraphQLContext;
 import graphql.GraphQLException;
 import io.leangen.graphql.annotations.GraphQLMutation;
 import io.leangen.graphql.annotations.GraphQLRootContext;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.core.Response;
 import net.brianlevine.keycloak.graphql.ErrorCode;
 import net.brianlevine.keycloak.graphql.ExceptionWithCode;
@@ -53,46 +54,56 @@ public class UserMutation {
             // Get back the user we just created and convert to a UserType
             UserModel userModel = session.users().getUserById(realm, id);
             ret =  new UserType(session, realm, userModel);
-        } catch (ErrorResponseException e) {
+        } catch (Exception e) {
             handleError(e);
         }
 
         return ret;
     }
 
-    private static void handleError(ErrorResponseException e) {
-        Response r = e.getResponse();
-        Object entity = r.getEntity();
+    // TODO: Will probably need to refactor into generic utility(ies) for other mutations
+    private static void handleError(Exception e) {
+        ExceptionWithCode ee;
 
-        String errorMessage = "";
-        String errorID = "";
-        if (entity instanceof ErrorRepresentation) {
-            errorMessage = ((ErrorRepresentation)entity).getErrorMessage();
+        if (e instanceof ForbiddenException) {
+            ee = new ExceptionWithCode("Could not create user: Forbidden", e, ErrorCode.Forbidden);
         }
-        else if (entity instanceof OAuth2ErrorRepresentation) {
-            errorMessage = ((OAuth2ErrorRepresentation)entity).getErrorDescription();
-            errorID = ((OAuth2ErrorRepresentation)entity).getError();
-        }
+        else if (e instanceof ErrorResponseException) {
+            Response r = ((ErrorResponseException)e).getResponse();
+            Object entity = r.getEntity();
 
-        ExceptionWithCode ee = new ExceptionWithCode("Could not create user: " + errorMessage, e);
-        int statusCode = r.getStatus();
+            String errorMessage = "";
+            String errorID = "";
+            if (entity instanceof ErrorRepresentation) {
+                errorMessage = ((ErrorRepresentation) entity).getErrorMessage();
+            } else if (entity instanceof OAuth2ErrorRepresentation) {
+                errorMessage = ((OAuth2ErrorRepresentation) entity).getErrorDescription();
+                errorID = ((OAuth2ErrorRepresentation) entity).getError();
+            }
 
+            ee = new ExceptionWithCode("Could not create user: " + errorMessage, e);
+            int statusCode = r.getStatus();
 
-        ErrorCode errorCode = ErrorCode.Unknown;
-        switch (statusCode) {
-            case 400:
-                if (!errorID.isEmpty()) {
-                    if (errorID.contains("invalidPassword")) {
-                        errorCode =  ErrorCode.InvalidPassword;
+            ErrorCode errorCode = ErrorCode.Unknown;
+            switch (statusCode) {
+                case 400:
+                    if (!errorID.isEmpty()) {
+                        if (errorID.contains("invalidPassword")) {
+                            errorCode = ErrorCode.InvalidPassword;
+                        }
                     }
-                }
-                break;
-            case 409:
-                errorCode = ErrorCode.UserExists;
-                break;
+                    break;
+                case 409:
+                    errorCode = ErrorCode.DuplicateUser;
+                    break;
+            }
+
+            ee.setCode(errorCode);
+        }
+        else {
+            ee = new ExceptionWithCode("Could not create user: " + e.getMessage(), e, ErrorCode.Unknown);
         }
 
-        ee.setCode(errorCode);
         throw ee;
     }
 }

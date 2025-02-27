@@ -1,13 +1,11 @@
 package net.brianlevine.keycloak.graphql.mutations;
 
 import io.restassured.response.ValidatableResponse;
+import net.brianlevine.keycloak.graphql.ErrorCode;
 import net.brianlevine.keycloak.graphql.KeycloakGraphQLTest;
 import org.junit.jupiter.api.Test;
-import org.keycloak.admin.client.resource.UserResource;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.*;
 
 class UserMutationTest extends KeycloakGraphQLTest {
 
@@ -53,7 +51,7 @@ class UserMutationTest extends KeycloakGraphQLTest {
     void shouldNotAllowDuplicateUsername() {
         String testUserName = "testUser";
 
-        UserResource userResource = createUser(testUserName, "testPassword");
+        createUser(testUserName, "testPassword");
 
         // language=GraphQL
         String mutation = String.format("""
@@ -68,5 +66,35 @@ class UserMutationTest extends KeycloakGraphQLTest {
 
         ValidatableResponse response = sendGraphQLRequestAsTestAdmin(mutation);
         //response.log().all();
+
+        response.body("data.createUser", nullValue());
+        response.body("errors[0].extensions.code", equalTo(ErrorCode.DuplicateUser.name()));
+    }
+
+    @Test
+    void shouldReturnForbiddenForNonAdmin() {
+        String username = "notanadmin";
+        String password = "notanadmin";
+
+        createUser(username, password);
+
+        // language=GraphQL
+        String mutation = String.format("""
+                mutation {
+                   createUser(user: {
+                     username: "%s"
+                   }) {
+                     id
+                   }
+                 }
+            """, "bogususer");
+
+        ValidatableResponse response = sendGraphQLRequestAsUser(mutation, TEST_REALM, username, password);
+        //response.log().all();
+
+        response.body("data.createUser", nullValue());
+        response.body("errors[0].extensions.code", equalTo(ErrorCode.Forbidden.name()));
+
+
     }
 }
