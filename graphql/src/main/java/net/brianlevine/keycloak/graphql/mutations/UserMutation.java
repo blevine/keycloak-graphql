@@ -1,7 +1,6 @@
 package net.brianlevine.keycloak.graphql.mutations;
 
 import graphql.GraphQLContext;
-import graphql.GraphQLException;
 import io.leangen.graphql.annotations.GraphQLMutation;
 import io.leangen.graphql.annotations.GraphQLRootContext;
 import jakarta.ws.rs.ForbiddenException;
@@ -91,6 +90,9 @@ public class UserMutation {
                         if (errorID.contains("invalidPassword")) {
                             errorCode = ErrorCode.InvalidPassword;
                         }
+                    }
+                    if (errorMessage.contains("missing")) {
+                        errorCode = ErrorCode.DataError;
                     }
                     break;
                 case 409:

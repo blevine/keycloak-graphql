@@ -94,7 +94,27 @@ class UserMutationTest extends KeycloakGraphQLTest {
 
         response.body("data.createUser", nullValue());
         response.body("errors[0].extensions.code", equalTo(ErrorCode.Forbidden.name()));
+    }
 
+    @Test
+    void shouldFailWhenUsernameNotSpecified() {
 
+        // language=GraphQL
+        String mutation = String.format("""
+                mutation {
+                   createUser(user: {
+                     email: "testemail@test.com"
+                   }) {
+                     id
+                   }
+                 }
+            """, "bogususer");
+
+        ValidatableResponse response = sendGraphQLRequestAsTestAdmin(mutation);
+        //response.log().all();
+
+        response.body("data.createUser", nullValue());
+        response.body("errors[0].extensions.code", equalTo(ErrorCode.DataError.name()));
+        response.body("errors[0].message", containsString("User name is missing"));
     }
 }

@@ -4,6 +4,7 @@ public enum ErrorCode {
     Forbidden,
     DuplicateUser,
     InvalidPassword,
+    DataError,
     Unknown
 
 }
